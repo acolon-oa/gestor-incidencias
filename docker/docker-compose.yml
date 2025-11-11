@@ -1,0 +1,12 @@
+services:
+  ui:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gestor-ui
+    ports:
+      - "8000:80"
+    volumes:
+      - ../index.html:/usr/share/nginx/html/index.html
+      - ../assets:/usr/share/nginx/html/assets
+      - ../pages:/usr/share/nginx/html/pages
