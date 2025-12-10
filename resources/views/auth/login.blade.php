@@ -8,9 +8,9 @@
     @vite('resources/css/app.css')
 </head>
 
-<body class="flex items-center justify-center h-screen bg-blue-400">
+<body class="flex items-center justify-center h-screen bg-base-300">
 
-    <div class="card w-96 shadow-xl bg-blue-100">
+    <div class="card w-96 shadow-xl bg-base-100 p-5 scale-110">
         <div class="card-body p-5">
 
             {{-- TÍTULO DEL LOGIN --}}
@@ -26,11 +26,7 @@
             {{-- action="route('login')" → usa la ruta interna de Laravel para autenticar --}}
             {{-- method="POST" porque la autenticación siempre usa POST --}}
             <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-4">
-
-                {{-- Token CSRF: evita ataques Cross-Site Request Forgery. 
-                     Laravel rechaza cualquier formulario sin esto. --}}
                 @csrf
-
                 {{-- CAMPO EMAIL --}}
                 <div class="form-control">
                     {{-- old('email') repone el valor si el login falla --}}
