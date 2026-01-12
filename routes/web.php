@@ -16,11 +16,6 @@ Route::get('/', function () {
 // Rutas protegidas por autenticación
 Route::middleware(['auth', 'nocache'])->group(function () {
 
-  // Gestión del perfil
-  Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-  Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-  Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
   // Dashboard principal, redirige según rol
   Route::get('/dashboard', function () {
     $user = Auth::user();
