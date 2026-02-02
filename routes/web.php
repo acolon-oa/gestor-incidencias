@@ -1,39 +1,68 @@
 <?php
 
+use App\Http\Controllers\AdminTicketController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TicketController;
 
 // Ruta raíz
 Route::get('/', function () {
-  return Auth::check()
-    ? redirect()->route('dashboard')
-    : redirect()->route('login');
+    return Auth::check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
 });
 
-// Rutas protegidas por autenticación
-Route::middleware(['auth', 'nocache'])->group(function () {
-
-  // Dashboard principal, redirige según rol
-  Route::get('/dashboard', function () {
-    $user = Auth::user();
-    return $user->hasRole('admin')
-      ? redirect()->route('admin.dashboard')
-      : redirect()->route('user.dashboard');
-  })->name('dashboard');
+// Dashboard general (redirige según rol)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        return auth()->user()->hasRole('admin')
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('user.dashboard');
+    })->name('dashboard');
 });
 
-// Dashboard de administrador
-Route::middleware(['auth', 'role:admin', 'nocache'])->group(function () {
-  Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
-});
+// ====================
+// ADMIN
+// ====================
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
 
-// Dashboard de usuario
-Route::middleware(['auth', 'role:user', 'nocache'])->group(function () {
-  Route::get('/user', [UserController::class, 'index'])->name('user.dashboard');
-});
+        Route::get('/', [AdminController::class, 'index'])
+            ->name('dashboard');
 
-// Rutas de autenticación (Breeze)
-require __DIR__ . '/auth.php';
+        // Admin puede: listar, ver, crear y guardar tickets
+        Route::resource('tickets', AdminTicketController::class)->only([
+            'index',
+            'show',
+            'create',
+            'store',
+            'update',
+            'destroy',
+        ]);
+    });
+
+// ====================
+// USER
+// ====================
+Route::middleware(['auth', 'role:user'])
+    ->prefix('user')
+    ->name('user.')
+    ->group(function () {
+
+        Route::get('/', [UserController::class, 'index'])
+            ->name('dashboard');
+
+        // Usuario: listar, crear y guardar tickets
+        Route::resource('tickets', TicketController::class)->only([
+            'index',
+            'create',
+            'store',
+        ]);
+    });
+
+// Auth (Breeze)
+require __DIR__.'/auth.php';

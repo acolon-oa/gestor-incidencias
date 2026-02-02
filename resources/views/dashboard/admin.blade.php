@@ -8,15 +8,15 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 mt-5">
         <div class="card bg-base-100 shadow p-4">
             <div class="text-sm text-gray-500">Open Tickets</div>
-            <div class="text-2xl font-bold">3</div>
+            <div class="text-2xl font-bold">{{ $openTicketsCount }}</div>
         </div>
         <div class="card bg-base-100 shadow p-4">
             <div class="text-sm text-gray-500">Tickets Pending My Action</div>
-            <div class="text-2xl font-bold">1</div>
+            <div class="text-2xl font-bold">{{ $myPendingTicketsCount }}</div>
         </div>
         <div class="card bg-base-100 shadow p-4">
             <div class="text-sm text-gray-500">Recently Resolved Tickets</div>
-            <div class="text-2xl font-bold">5</div>
+            <div class="text-2xl font-bold">{{ $resolvedTicketsCount }}</div>
         </div>
     </div>
 
@@ -50,14 +50,29 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>#9145</td>
-                        <td>Marketing Printer Issue</td>
-                        <td><span class="badge badge-error">Open</span></td>
-                        <td>15m ago</td>
-                        <td>Marketing</td>
-                    </tr>
-                    <!-- resto -->
+                    @forelse($tickets as $ticket)
+                        <tr>
+                            <td>#{{ $ticket->id }}</td>
+                            <td>{{ $ticket->title }}</td>
+                            <td>
+                                @if($ticket->status == 'open')
+                                    <span class="badge badge-error">Open</span>
+                                @elseif($ticket->status == 'in_progress')
+                                    <span class="badge badge-warning">In Progress</span>
+                                @elseif($ticket->status == 'closed')
+                                    <span class="badge badge-success">Closed</span>
+                                @else
+                                    <span class="badge badge-ghost">{{ ucfirst($ticket->status) }}</span>
+                                @endif
+                            </td>
+                            <td>{{ $ticket->updated_at->diffForHumans() }}</td>
+                            <td>{{ $ticket->department ? $ticket->department->name : 'General' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center text-gray-400 py-8 italic">No tickets found</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

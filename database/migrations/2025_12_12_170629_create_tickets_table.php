@@ -11,17 +11,22 @@ return new class extends Migration
    */
   public function up(): void
   {
-    Schema::create('tickets', function (Blueprint $table) {
-      $table->id();
-      $table->string('subject');
-      $table->string('department');
-      $table->enum('priority', ['low', 'medium', 'high'])->default('low');
-      $table->enum('status', ['open', 'in_progress', 'closed'])->default('open');
-      $table->longText('description')->nullable();
-      $table->foreignId('user_id')->constrained()->onDelete('cascade');
-      $table->timestamps();
-    });
+      if (!Schema::hasTable('tickets')) {
+          Schema::create('tickets', function (Blueprint $table) {
+              $table->id();
+              $table->string('title');
+              $table->text('description');
+              $table->enum('status', ['open', 'in_progress', 'closed'])->default('open');
+              $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->default('low');
+              $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+              $table->foreignId('assigned_to_id')->nullable()->constrained('users')->nullOnDelete();
+              $table->foreignId('department_id')->constrained('departments')->cascadeOnDelete();
+              $table->timestamp('closed_at')->nullable();
+              $table->timestamps();
+          });
+      }
   }
+
 
   /**
    * Reverse the migrations.
