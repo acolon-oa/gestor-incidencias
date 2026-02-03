@@ -38,14 +38,13 @@
                         <th>Status</th>
                         <th>Last Updated</th>
                         <th>Department</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($tickets as $ticket)
-                        <tr>
-                            <td>#{{ $ticket->id }}</td>
-                            <td>{{ $ticket->title }}</td>
+                        <tr class="hover:bg-gray-100 cursor-pointer transition-colors" onclick="window.location='{{ route('user.tickets.show', $ticket->id) }}'">
+                            <td class="font-bold text-gray-400">#{{ $ticket->id }}</td>
+                            <td class="font-semibold text-gray-700">{{ $ticket->title }}</td>
                             <td>
                                 @if($ticket->status == 'open')
                                     <span class="badge badge-error">Open</span>
@@ -55,15 +54,14 @@
                                     <span class="badge badge-success">Closed</span>
                                 @endif
                             </td>
-                            <td>{{ $ticket->updated_at->diffForHumans() }}</td>
-                            <td>{{ $ticket->department->name }}</td>
+                            <td class="text-sm text-gray-500">{{ $ticket->updated_at->diffForHumans() }}</td>
                             <td>
-                                <a href="{{ route('user.tickets.show', $ticket->id) }}" class="btn btn-xs btn-ghost">Details</a>
+                                <span class="badge badge-ghost">{{ $ticket->department->name }}</span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-gray-400 py-8 italic">No tickets found</td>
+                            <td colspan="5" class="text-center text-gray-400 py-8 italic">No tickets found</td>
                         </tr>
                     @endforelse
                 </tbody>

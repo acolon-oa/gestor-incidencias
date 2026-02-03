@@ -80,13 +80,13 @@ class AdminTicketController extends Controller
 
         $ticket->update($validated);
 
-        return back()->with('success', 'Ticket actualizado correctamente.');
+        return redirect()->route('admin.dashboard')->with('success', 'Ticket updated successfully.');
     }
 
     // Eliminar ticket
     public function destroy(Ticket $ticket)
     {
         $ticket->delete();
-        return redirect()->route('admin.dashboard')->with('success', 'Ticket eliminado.');
+        return redirect()->route('admin.dashboard')->with('success', 'Ticket deleted successfully.');
     }
 }

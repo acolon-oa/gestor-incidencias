@@ -33,7 +33,7 @@
             </li>
 
             <li class="mb-3">
-                <a class="flex items-center gap-2 hover:bg-gray-100 rounded-md p-3">
+                <a href="{{ route('admin.users.index') }}" class="flex items-center gap-2 {{ request()->routeIs('admin.users.*') ? 'active' : '' }} hover:bg-gray-100 rounded-md p-3">
                     <x-heroicon-o-users class="w-5 h-5" />
                     <p>Users</p>
                 </a>

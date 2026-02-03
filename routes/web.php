@@ -46,6 +46,8 @@ Route::middleware(['auth', 'role:admin'])
             'update',
             'destroy',
         ]);
+
+        Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     });
 
 // ====================
