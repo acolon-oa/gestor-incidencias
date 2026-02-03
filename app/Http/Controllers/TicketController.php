@@ -29,20 +29,23 @@ class TicketController extends Controller
     {
         $validated = $request->validate([
             'subject'     => 'required|string|max:255',
-            'department'  => 'required|string|max:100',
+            'department'  => 'required|string|exists:departments,name',
             'priority'    => 'nullable|string|in:low,medium,high',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
         ]);
+
+        $department = \App\Models\Department::where('name', $validated['department'])->first();
 
         $ticket = Ticket::create([
-            'subject'     => $validated['subject'],
-            'department'  => $validated['department'],
-            'priority'    => $validated['priority'] ?? 'low',
-            'description' => $validated['description'] ?? null,
-            'user_id'     => Auth::id(),
+            'title'         => $validated['subject'],
+            'description'   => $validated['description'],
+            'priority'      => $validated['priority'] ?? 'low',
+            'department_id' => $department->id,
+            'user_id'       => Auth::id(),
+            'status'        => 'open',
         ]);
 
-        return redirect()->route('user.tickets.show', $ticket->id)
+        return redirect()->route('user.dashboard')
                          ->with('success', 'Ticket creado correctamente.');
     }
 
@@ -52,6 +55,8 @@ class TicketController extends Controller
         if ($ticket->user_id !== Auth::id()) {
             abort(403, 'No autorizado');
         }
+
+        $ticket->load(['department', 'comments.user', 'assignedTo']);
 
         return view('user.tickets.show', compact('ticket'));
     }

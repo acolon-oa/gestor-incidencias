@@ -50,4 +50,9 @@ class Ticket extends Model
     {
         return $this->belongsTo(Department::class);
     }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->latest();
+    }
 }

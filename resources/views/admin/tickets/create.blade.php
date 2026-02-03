@@ -41,6 +41,7 @@
     <form id="incident-form" action="{{ route('admin.tickets.store') }}" method="POST">
         @csrf
         <input type="hidden" name="status" value="open">
+        <input type="hidden" name="user_id" value="{{ auth()->id() }}">
 
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-12">
             
@@ -70,10 +71,6 @@
                         class="textarea w-full h-80 bg-white border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all text-lg leading-relaxed placeholder-gray-300 rounded-xl p-6" 
                         required placeholder="What happened? What are the reproduction steps? What is the impact?">{!! old('description') !!}</textarea>
                     <div class="flex justify-between items-center mt-2 px-1">
-                        <span class="text-xs text-gray-400 flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            Supports standard plaintext with line breaks.
-                        </span>
                     </div>
                 </div>
 
@@ -86,20 +83,7 @@
                     
                     <h3 class="text-sm font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-4 mb-2">Contextual Data</h3>
 
-                    <!-- Requester -->
-                    <div class="form-control w-full">
-                        <label class="label">
-                            <span class="label-text font-bold text-gray-600 text-xs uppercase tracking-wider">Affected User</span>
-                        </label>
-                        <select name="user_id" class="select select-bordered bg-white border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all rounded-xl font-medium" required>
-                            <option value="" disabled selected>Select User</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                    {{ $user->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+
 
                     <!-- Department -->
                     <div class="form-control w-full">
@@ -149,13 +133,7 @@
                         </div>
                     </div>
 
-                    <!-- Visual Separator -->
-                    <div class="pt-6 border-t border-gray-100 mt-4">
-                        <div class="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                            <p class="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Direct Assignment</p>
-                            <p class="text-xs text-gray-500 leading-relaxed">By default, this ticket will be queued for the selected department's triage team.</p>
-                        </div>
-                    </div>
+
 
                 </div>
 

@@ -10,7 +10,7 @@
 
             <li class="mb-3">
                 <a href="{{ route('dashboard') }}"
-                   class="flex items-center gap-2 active hover:bg-gray-100 rounded-md p-3">
+                   class="flex items-center gap-2 {{ request()->routeIs('dashboard*') ? 'active' : '' }} hover:bg-gray-100 rounded-md p-3">
                     <x-heroicon-o-home class="w-5 h-5" />
                     <p>Dashboard</p>
                 </a>

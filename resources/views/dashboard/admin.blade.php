@@ -24,18 +24,20 @@
     <div class="card bg-base-100 shadow p-4 mt-2">
         <div class="flex justify-between items-center mb-4">
             <div class="text-md font-bold ml-3 text-gray-500">All Tickets</div>
-            <div class="flex items-center gap-2 mb-3 mt-3">
-                <input type="text" placeholder="Ticket ID" class="input input-md input-bordered w-36" />
-                <select class="select select-md select-bordered w-36">
-                    <option disabled selected>Status</option>
-                    <option>All</option>
-                    <option>Open</option>
-                    <option>Pending</option>
-                    <option>In Progress</option>
-                    <option>Resolved</option>
+            <form action="{{ route('admin.dashboard') }}" method="GET" class="flex items-center gap-2 mb-3 mt-3">
+                <input type="text" name="ticket_id" value="{{ request('ticket_id') }}" placeholder="Ticket ID" class="input input-md input-bordered w-36" />
+                <select name="status" class="select select-md select-bordered w-36">
+                    <option value="All" {{ request('status') == 'All' ? 'selected' : '' }}>All Status</option>
+                    <option value="Open" {{ request('status') == 'Open' ? 'selected' : '' }}>Open</option>
+                    <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="In Progress" {{ request('status') == 'In Progress' ? 'selected' : '' }}>In Progress</option>
+                    <option value="Resolved" {{ request('status') == 'Resolved' ? 'selected' : '' }}>Resolved</option>
                 </select>
-                <button class="btn btn-md btn-primary">Search</button>
-            </div>
+                <button type="submit" class="btn btn-md btn-primary">Search</button>
+                @if(request()->anyFilled(['ticket_id', 'status']))
+                    <a href="{{ route('admin.dashboard') }}" class="btn btn-md btn-ghost">Reset</a>
+                @endif
+            </form>
         </div>
 
         <div class="overflow-x-auto">
@@ -47,6 +49,7 @@
                         <th>Status</th>
                         <th>Last Updated</th>
                         <th>Department</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,10 +70,13 @@
                             </td>
                             <td>{{ $ticket->updated_at->diffForHumans() }}</td>
                             <td>{{ $ticket->department ? $ticket->department->name : 'General' }}</td>
+                            <td>
+                                <a href="{{ route('admin.tickets.show', $ticket->id) }}" class="btn btn-xs btn-ghost">View</a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-gray-400 py-8 italic">No tickets found</td>
+                            <td colspan="6" class="text-center text-gray-400 py-8 italic">No tickets found</td>
                         </tr>
                     @endforelse
                 </tbody>
