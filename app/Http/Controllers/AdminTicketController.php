@@ -8,10 +8,33 @@ use Illuminate\Http\Request;
 class AdminTicketController extends Controller
 {
     // Listar todos los tickets
-    public function index()
+    public function index(Request $request)
     {
-        $tickets = Ticket::with(['user', 'department', 'assignedTo'])->latest()->paginate(15);
+        $user = auth()->user();
+        $query = Ticket::with(['user', 'department', 'assignedTo']);
+
+        if (!$user->hasRole('admin')) {
+            $query->where('department_id', $user->department_id);
+        }
+
+        if ($request->filled('ticket_id')) {
+            $query->where('id', $request->ticket_id);
+        }
+
+        if ($request->filled('status') && $request->status !== 'All') {
+            $status = strtolower(str_replace(' ', '_', $request->status));
+            if ($status === 'resolved') $status = 'closed';
+            $query->where('status', $status);
+        }
+
+        $tickets = $query->latest()->paginate(15)->withQueryString();
+        
         return view('admin.tickets.index', compact('tickets'));
+    }
+
+    public function edit(Ticket $ticket)
+    {
+        return redirect()->route('admin.tickets.show', $ticket->id);
     }
 
     // Mostrar ticket
@@ -70,9 +93,24 @@ class AdminTicketController extends Controller
             'status' => 'nullable|in:open,in_progress,closed',
             'assigned_to_id' => 'nullable|exists:users,id',
             'priority' => 'nullable|in:low,medium,high,urgent',
+            'department_id' => 'nullable|exists:departments,id',
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
         ]);
+
+        if (isset($validated['department_id']) && $validated['department_id'] != $ticket->department_id) {
+            // If department changes, we must unassign the current user as they might not belong to the new department
+            $validated['assigned_to_id'] = null;
+        }
+
+        if (isset($validated['assigned_to_id']) && $validated['assigned_to_id'] !== null) {
+            // Verify the user belongs to the ticket's department (or new department)
+            $targetDeptId = $validated['department_id'] ?? $ticket->department_id;
+            $user = \App\Models\User::find($validated['assigned_to_id']);
+            if ($user->department_id != $targetDeptId) {
+                return back()->withErrors(['assigned_to_id' => 'The selected agent does not belong to the correct department.']);
+            }
+        }
 
         if (isset($validated['status']) && $validated['status'] === 'closed') {
             $ticket->closed_at = now();
@@ -88,5 +126,17 @@ class AdminTicketController extends Controller
     {
         $ticket->delete();
         return redirect()->route('admin.dashboard')->with('success', 'Ticket deleted successfully.');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ticket_ids' => 'required|array',
+            'ticket_ids.*' => 'exists:tickets,id',
+        ]);
+
+        Ticket::whereIn('id', $request->ticket_ids)->delete();
+
+        return redirect()->route('admin.dashboard')->with('success', count($request->ticket_ids) . ' tickets deleted successfully.');
     }
 }

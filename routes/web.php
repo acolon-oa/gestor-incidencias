@@ -24,6 +24,11 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     Route::post('/tickets/{ticket}/comments', [CommentController::class, 'store'])->name('comments.store');
+    
+    // Profile Routes
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 // ====================
@@ -37,6 +42,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/', [AdminController::class, 'index'])
             ->name('dashboard');
 
+        // Bulk Actions
+        Route::delete('/tickets/bulk-delete', [AdminTicketController::class, 'bulkDelete'])->name('tickets.bulk-delete');
+
         // Admin puede: listar, ver, crear y guardar tickets
         Route::resource('tickets', AdminTicketController::class)->only([
             'index',
@@ -48,6 +56,7 @@ Route::middleware(['auth', 'role:admin'])
         ]);
 
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+        Route::get('/statistics', [\App\Http\Controllers\Admin\StatisticsController::class, 'index'])->name('statistics.index');
     });
 
 // ====================

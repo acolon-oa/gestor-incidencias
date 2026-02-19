@@ -8,14 +8,25 @@ class UserController extends Controller
 {
     public function index()
     {
-        $userId = auth()->id();
+        $user = auth()->user();
+        $userId = $user->id;
+        $deptId = $user->department_id;
         
-        $openTicketsCount = \App\Models\Ticket::where('user_id', $userId)->where('status', 'open')->count();
-        $inProgressTicketsCount = \App\Models\Ticket::where('user_id', $userId)->where('status', 'in_progress')->count();
-        $resolvedTicketsCount = \App\Models\Ticket::where('user_id', $userId)->where('status', 'closed')->count();
+        // Count tickets the user is involved in (own or department)
+        $queryCounts = \App\Models\Ticket::where(function($q) use ($userId, $deptId) {
+            $q->where('user_id', $userId)
+              ->orWhere('department_id', $deptId);
+        });
 
-        $tickets = \App\Models\Ticket::with('department')
-            ->where('user_id', $userId)
+        $openTicketsCount = (clone $queryCounts)->where('status', 'open')->count();
+        $inProgressTicketsCount = (clone $queryCounts)->where('status', 'in_progress')->count();
+        $resolvedTicketsCount = (clone $queryCounts)->where('status', 'closed')->count();
+
+        $tickets = \App\Models\Ticket::with(['department', 'user'])
+            ->where(function($q) use ($userId, $deptId) {
+                $q->where('user_id', $userId)
+                  ->orWhere('department_id', $deptId);
+            })
             ->latest()
             ->get();
 

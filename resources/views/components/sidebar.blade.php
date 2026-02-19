@@ -17,7 +17,8 @@
             </li>
 
             <li class="mb-3">
-                <a class="flex items-center gap-2 hover:bg-gray-100 rounded-md p-3">
+                <a href="{{ auth()->user()->hasRole('admin') ? route('admin.tickets.index') : route('user.dashboard') }}" 
+                   class="flex items-center gap-2 {{ request()->routeIs('admin.tickets.*') ? 'active' : '' }} hover:bg-gray-100 rounded-md p-3">
                     <x-heroicon-o-inbox class="w-5 h-5" />
                     <p>Tickets</p>
                 </a>
@@ -26,7 +27,8 @@
             {{-- SOLO ADMIN --}}
             @role('admin')
             <li class="mb-3">
-                <a class="flex items-center gap-2 hover:bg-gray-100 rounded-md p-3">
+                <a href="{{ route('admin.statistics.index') }}" 
+                   class="flex items-center gap-2 {{ request()->routeIs('admin.statistics.*') ? 'active' : '' }} hover:bg-gray-100 rounded-md p-3">
                     <x-heroicon-o-chart-bar class="w-5 h-5" />
                     <p>Statistics</p>
                 </a>
@@ -48,7 +50,8 @@
             </li>
 
             <li class="mb-3">
-                <a class="flex items-center gap-2 hover:bg-gray-100 rounded-md p-3">
+                <a href="{{ route('profile.edit') }}" 
+                   class="flex items-center gap-2 {{ request()->routeIs('profile.edit') ? 'active' : '' }} hover:bg-gray-100 rounded-md p-3">
                     <x-heroicon-o-cog-6-tooth class="w-5 h-5" />
                     <p>Settings</p>
                 </a>

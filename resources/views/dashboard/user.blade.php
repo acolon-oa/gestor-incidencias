@@ -23,14 +23,14 @@
     <!-- Incidences Card -->
     <div class="card bg-base-100 shadow p-4 mt-2">
         <div class="flex justify-between items-center mb-4">
-            <div class="text-md font-bold ml-3 text-gray-500">My Tickets</div>
+            <div class="text-md font-bold ml-3 text-gray-500">Departmental & My Tickets</div>
             <div class="flex items-center gap-2 mb-3 mt-3">
                 <a href="{{ route('user.tickets.create') }}" class="btn btn-md btn-primary">New Ticket</a>
             </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="table w-full">
+        <div class="overflow-x-auto overflow-y-auto max-h-[500px]">
+            <table class="table w-full table-pin-rows">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -42,7 +42,7 @@
                 </thead>
                 <tbody>
                     @forelse($tickets as $ticket)
-                        <tr class="hover:bg-gray-100 cursor-pointer transition-colors" onclick="window.location='{{ route('user.tickets.show', $ticket->id) }}'">
+                        <tr class="hover:bg-base-200 transition-colors cursor-pointer" onclick="window.location='{{ route('user.tickets.show', $ticket->id) }}'">
                             <td class="font-bold text-gray-400">#{{ $ticket->id }}</td>
                             <td class="font-semibold text-gray-700">{{ $ticket->title }}</td>
                             <td>
