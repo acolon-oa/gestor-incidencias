@@ -5,7 +5,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "local": "docker compose up -d && concurrently \"npm run dev\" \"php artisan serve\" "
+        "local": "docker compose up -d && concurrently \"npm run dev\" \"php artisan serve --no-reload\" "
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",

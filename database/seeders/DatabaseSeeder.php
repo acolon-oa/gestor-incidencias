@@ -37,5 +37,7 @@ class DatabaseSeeder extends Seeder
         if (!$user->hasRole('user')) {
             $user->assignRole($userRole);
         }
+
+        $this->call(DepartmentSeeder::class);
     }
 }

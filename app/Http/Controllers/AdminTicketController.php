@@ -107,7 +107,7 @@ class AdminTicketController extends Controller
             // Verify the user belongs to the ticket's department (or new department)
             $targetDeptId = $validated['department_id'] ?? $ticket->department_id;
             $user = \App\Models\User::find($validated['assigned_to_id']);
-            if ($user->department_id != $targetDeptId) {
+            if ($user->department_id && $user->department_id != $targetDeptId) {
                 return back()->withErrors(['assigned_to_id' => 'The selected agent does not belong to the correct department.']);
             }
         }
@@ -118,7 +118,7 @@ class AdminTicketController extends Controller
 
         $ticket->update($validated);
 
-        return redirect()->route('admin.dashboard')->with('success', 'Ticket updated successfully.');
+        return redirect()->route('admin.tickets.show', $ticket->id)->with('success', 'Ticket updated successfully.');
     }
 
     // Eliminar ticket

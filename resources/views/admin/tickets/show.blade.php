@@ -4,7 +4,15 @@
 
 @section('content')
 <div class="card bg-base-100 shadow p-6">
-    <form action="{{ route('admin.tickets.update', $ticket->id) }}" method="POST">
+
+    @if(session('success'))
+        <div class="alert alert-success mb-4">
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
+    {{-- Single unified form for all ticket updates --}}
+    <form id="ticket-update-form" action="{{ route('admin.tickets.update', $ticket->id) }}" method="POST">
         @csrf
         @method('PATCH')
 
@@ -62,15 +70,6 @@
                         </div>
                     @endforeach
                 </div>
-    </form> {{-- Close main update form here before comment form --}}
-
-                <div class="border-t pt-6">
-                    <form action="{{ route('comments.store', $ticket->id) }}" method="POST">
-                        @csrf
-                        <textarea name="content" class="textarea textarea-bordered w-full" placeholder="Add a comment..." required></textarea>
-                        <button type="submit" class="btn btn-neutral btn-sm mt-2">Post Comment</button>
-                    </form>
-                </div>
             </div>
 
             <div class="bg-gray-50 dark:bg-base-200 p-4 rounded-lg h-fit">
@@ -81,9 +80,8 @@
                         <p class="font-bold px-1">{{ $ticket->user->name }}</p>
                     </div>
                     <div>
-                        <label class="block text-gray-400 mb-1">Target Department (Redirection)</label>
-                        {{-- This select belongs to the main form because it's inside the tags --}}
-                        <select name="department_id" class="select select-bordered select-sm w-full font-bold" form="ticket-update-form">
+                        <label class="block text-gray-400 mb-1">Target Department</label>
+                        <select name="department_id" class="select select-bordered select-sm w-full font-bold">
                             @foreach(\App\Models\Department::all() as $dept)
                                 <option value="{{ $dept->id }}" {{ $ticket->department_id == $dept->id ? 'selected' : '' }}>
                                     {{ $dept->name }}
@@ -97,11 +95,14 @@
                     </div>
                     <div>
                         <label class="block text-gray-400 mb-1">Assign Agent</label>
-                        <select name="assigned_to_id" class="select select-bordered select-sm w-full" form="ticket-update-form">
+                        <select name="assigned_to_id" class="select select-bordered select-sm w-full">
                             <option value="">Unassigned</option>
                             @php
-                                $deptUsers = \App\Models\User::where('department_id', $ticket->department_id)
-                                    ->whereHas('roles', fn($q) => $q->where('name', 'admin'))
+                                $deptUsers = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'admin'))
+                                    ->where(function($q) use ($ticket) {
+                                        $q->where('department_id', $ticket->department_id)
+                                          ->orWhereNull('department_id');
+                                    })
                                     ->get();
                             @endphp
                             @foreach($deptUsers as $agent)
@@ -115,21 +116,16 @@
                 </div>
             </div>
         </div>
+    </form>
+
+    {{-- Comment form is separate, outside the update form --}}
+    <div class="border-t pt-6 mt-4">
+        <form action="{{ route('comments.store', $ticket->id) }}" method="POST">
+            @csrf
+            <textarea name="content" class="textarea textarea-bordered w-full" placeholder="Add a comment..." required></textarea>
+            <button type="submit" class="btn btn-neutral btn-sm mt-2">Post Comment</button>
+        </form>
+    </div>
+
 </div>
-
-{{-- This is a little trick to use same form for inputs outside the actual <form> tags --}}
-<form id="ticket-update-form" action="{{ route('admin.tickets.update', $ticket->id) }}" method="POST" style="display:none;">
-    @csrf
-    @method('PATCH')
-</form>
-
-<script>
-    // Copy select values to the hidden form just before submission if needed, 
-    // or just use the 'form' attribute which is cleaner.
-    document.querySelector('form[action$="update"]').id = 'ticket-update-form-main';
-    // Link sidebar selects to the main form
-    document.querySelectorAll('select[name="department_id"], select[name="assigned_to_id"]').forEach(el => {
-        el.setAttribute('form', 'ticket-update-form-main');
-    });
-</script>
 @endsection

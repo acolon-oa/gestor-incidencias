@@ -75,6 +75,7 @@ Route::middleware(['auth', 'role:user'])
             'index',
             'create',
             'store',
+            'show',
         ]);
     });
 

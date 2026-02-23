@@ -56,7 +56,7 @@
                             </td>
                             <td class="text-sm text-gray-500">{{ $ticket->updated_at->diffForHumans() }}</td>
                             <td>
-                                <span class="badge badge-ghost">{{ $ticket->department->name }}</span>
+                                <span class="badge badge-ghost">{{ $ticket->department->name ?? 'N/A' }}</span>
                             </td>
                         </tr>
                     @empty
