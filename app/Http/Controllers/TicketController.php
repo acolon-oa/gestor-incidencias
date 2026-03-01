@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
+use App\Models\User;
+use App\Notifications\TicketCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -45,15 +47,19 @@ class TicketController extends Controller
             'status'        => 'open',
         ]);
 
+        // Notify all admins that a new ticket has been submitted
+        $ticket->load(['user', 'department']);
+        User::role('admin')->each(fn($admin) => $admin->notify(new TicketCreated($ticket)));
+
         return redirect()->route('user.dashboard')
-                         ->with('success', 'Ticket creado correctamente.');
+                         ->with('success', 'Ticket submitted successfully. Our team will review it shortly.');
     }
 
     // Ver ticket
     public function show(Ticket $ticket)
     {
         if ($ticket->user_id !== Auth::id()) {
-            abort(403, 'No autorizado');
+            abort(403, 'Unauthorized');
         }
 
         $ticket->load(['department', 'comments.user', 'assignedTo']);

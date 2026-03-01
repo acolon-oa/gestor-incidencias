@@ -56,12 +56,14 @@
                             </td>
                             <td class="pr-6 text-right">
                                 <div class="flex justify-end gap-1">
-                                    <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-ghost btn-xs text-primary font-bold">Edit</a>
-                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-ghost btn-xs text-error font-bold">Delete</button>
-                                    </form>
+                                    @if($user->id !== auth()->id())
+                                        <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-ghost btn-xs text-primary font-bold">Edit</a>
+                                        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-ghost btn-xs text-error font-bold">Delete</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

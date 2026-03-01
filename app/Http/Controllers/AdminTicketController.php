@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
+use App\Models\User;
+use App\Notifications\TicketCreated;
+use App\Notifications\TicketUpdated;
 use Illuminate\Http\Request;
 
 class AdminTicketController extends Controller
@@ -62,25 +65,23 @@ class AdminTicketController extends Controller
             'status'      => 'required|in:open,in_progress,closed',
             'priority'    => 'required|in:low,medium,high,urgent',
             'department_id' => 'required|exists:departments,id',
-            'user_id'     => 'required|exists:users,id', // Valid requester is mandatory
-            'assigned_to_id' => 'nullable|exists:users,id',
-            'assign_to_me' => 'nullable|string', // Checkbox handling
         ]);
 
-        $assignedToId = $request->assigned_to_id;
-        if ($request->has('assign_to_me')) {
-            $assignedToId = auth()->id();
-        }
-
-        Ticket::create([
-            'title'       => $request->title,
-            'description' => $request->description,
-            'status'      => $request->status ?? 'open',
-            'priority'    => $request->priority ?? 'low',
-            'department_id' => $request->department_id,
-            'user_id'     => $request->user_id, // Requester
-            'assigned_to_id' => $assignedToId, // Assigned Agent
+        $ticket = Ticket::create([
+            'title'          => $request->title,
+            'description'    => $request->description,
+            'status'         => $request->status ?? 'open',
+            'priority'       => $request->priority ?? 'low',
+            'department_id'  => $request->department_id,
+            'user_id'        => auth()->id(), // Becomes the requester
+            'assigned_to_id' => null, // Starts unassigned
         ]);
+
+        // Notify all other admins of new ticket
+        $ticket->load(['user', 'department']);
+        User::role('admin')
+            ->where('id', '!=', auth()->id())
+            ->each(fn($admin) => $admin->notify(new TicketCreated($ticket)));
 
         return redirect()->route('admin.dashboard')
                          ->with('success', 'Ticket created successfully.');
@@ -99,24 +100,53 @@ class AdminTicketController extends Controller
         ]);
 
         if (isset($validated['department_id']) && $validated['department_id'] != $ticket->department_id) {
-            // If department changes, we must unassign the current user as they might not belong to the new department
             $validated['assigned_to_id'] = null;
         }
 
         if (isset($validated['assigned_to_id']) && $validated['assigned_to_id'] !== null) {
-            // Verify the user belongs to the ticket's department (or new department)
             $targetDeptId = $validated['department_id'] ?? $ticket->department_id;
-            $user = \App\Models\User::find($validated['assigned_to_id']);
+            $user = User::find($validated['assigned_to_id']);
             if ($user->department_id && $user->department_id != $targetDeptId) {
                 return back()->withErrors(['assigned_to_id' => 'The selected agent does not belong to the correct department.']);
             }
         }
+
+        $oldStatus = $ticket->status;
+        $oldAssignedTo = $ticket->assigned_to_id;
 
         if (isset($validated['status']) && $validated['status'] === 'closed') {
             $ticket->closed_at = now();
         }
 
         $ticket->update($validated);
+        $ticket->load(['user', 'department', 'assignedTo']);
+
+        // Notify the requester of status changes (if not the one making the change)
+        if (isset($validated['status']) && $validated['status'] !== $oldStatus) {
+            if ($ticket->user_id !== auth()->id()) {
+                $ticket->user?->notify(new TicketUpdated(
+                    $ticket,
+                    'status_changed',
+                    $oldStatus,
+                    $validated['status']
+                ));
+            }
+            // Also notify all admins except the one who made the change
+            User::role('admin')
+                ->where('id', '!=', auth()->id())
+                ->each(fn($admin) => $admin->notify(new TicketUpdated($ticket, 'status_changed', $oldStatus, $validated['status'])));
+        }
+
+        // Notify the newly assigned agent
+        $newAssignedTo = $validated['assigned_to_id'] ?? $ticket->assigned_to_id;
+        if (
+            isset($validated['assigned_to_id']) &&
+            $validated['assigned_to_id'] !== $oldAssignedTo &&
+            $newAssignedTo &&
+            $newAssignedTo !== auth()->id()
+        ) {
+            $ticket->assignedTo?->notify(new TicketUpdated($ticket, 'assigned'));
+        }
 
         return redirect()->route('admin.tickets.show', $ticket->id)->with('success', 'Ticket updated successfully.');
     }

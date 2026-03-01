@@ -25,6 +25,22 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/tickets/{ticket}/comments', [CommentController::class, 'store'])->name('comments.store');
     
+    // Notification Routes
+    Route::get('/notifications', function () {
+        $notifications = auth()->user()->notifications()->paginate(15);
+        return view('notifications.index', compact('notifications'));
+    })->name('notifications.index');
+
+    Route::post('/notifications/{id}/read', function ($id) {
+        auth()->user()->notifications()->where('id', $id)->first()?->markAsRead();
+        return back();
+    })->name('notifications.read');
+
+    Route::post('/notifications/read-all', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back()->with('success', 'All notifications marked as read.');
+    })->name('notifications.read-all');
+
     // Profile Routes
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');

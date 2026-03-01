@@ -9,54 +9,98 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Apply theme as early as possible
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        // Default to light unless 'dark' is explicitly saved
+        if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
         } else {
             document.documentElement.setAttribute('data-theme', 'light');
         }
     </script>
     <style>
-        /* Force high contrast for titles and main text in dark mode */
-        [data-theme='dark'] .font-black,
-        [data-theme='dark'] .font-bold,
+        /* Global Background consistency */
+        body {
+            background-color: hsl(var(--b2)); 
+            min-height: 100vh;
+        }
+
+        /* Dark mode contrast fixes */
+        [data-theme='dark'] {
+            color_scheme: dark;
+            --b1: 220 15% 12%; /* Slightly lighter base-100 for better distinction */
+            --b2: 220 15% 8%;   /* Darker base-200 */
+        }
+
+        /* Accessibile text colors in dark mode (Silver-Gray instead of pure white) */
+        [data-theme='dark'] .text-base-content,
         [data-theme='dark'] h1, 
         [data-theme='dark'] h2, 
-        [data-theme='dark'] h3,
-        [data-theme='dark'] .text-xl,
-        [data-theme='dark'] .text-2xl,
-        [data-theme='dark'] .text-3xl,
-        [data-theme='dark'] .text-4xl {
-            color: #ffffff !important;
+        [data-theme='dark'] h3 {
+            color: #d1d5db !important; /* Silver-gray (gray-300) */
         }
 
-        /* Adjust opacities to be more visible in dark mode */
-        [data-theme='dark'] .opacity-60 { opacity: 0.85 !important; color: #ffffff; }
-        [data-theme='dark'] .opacity-70 { opacity: 0.9 !important; color: #ffffff; }
-        [data-theme='dark'] .opacity-40 { opacity: 0.6 !important; color: #ffffff; }
-        [data-theme='dark'] .opacity-50 { opacity: 0.75 !important; color: #ffffff; }
+        [data-theme='dark'] .font-black,
+        [data-theme='dark'] .font-bold {
+            color: #e5e7eb !important; /* Slightly brighter for emphasis (gray-200) */
+        }
         
-        /* Sidebar specific adjustments for dark mode */
-        [data-theme='dark'] .drawer-side .menu p,
-        [data-theme='dark'] .drawer-side .font-bold {
-            color: #ffffff !important;
+        /* Secondary and Muted text in dark mode */
+        [data-theme='dark'] .text-base-content\/40,
+        [data-theme='dark'] .text-gray-400,
+        [data-theme='dark'] .opacity-60,
+        [data-theme='dark'] .italic {
+            color: #9ca3af !important; /* Clearly visible gray (gray-400) */
         }
 
-        /* Table headers in dark mode */
-        [data-theme='dark'] thead th {
-            color: rgba(255, 255, 255, 0.7) !important;
+        /* Borders in dark mode */
+        [data-theme='dark'] .border-base-content\/5,
+        [data-theme='dark'] .border-base-content\/10,
+        [data-theme='dark'] .border-gray-200,
+        [data-theme='dark'] .border-gray-100 {
+            border-color: rgba(255, 255, 255, 0.08) !important;
         }
+
+        /* Fix for specific DaisyUI components in dark mode */
+        [data-theme='dark'] .bg-base-100 { background-color: hsl(var(--b1)) !important; }
+        [data-theme='dark'] .bg-base-200 { background-color: hsl(var(--b2)) !important; }
+        
+        /* Inputs/Textareas in dark mode */
+        [data-theme='dark'] .input, 
+        [data-theme='dark'] .select, 
+        [data-theme='dark'] .textarea {
+            background-color: rgba(255, 255, 255, 0.03) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #e5e7eb !important;
+        }
+        [data-theme='dark'] .input:focus, 
+        [data-theme='dark'] .select:focus, 
+        [data-theme='dark'] .textarea:focus {
+            border-color: hsl(var(--p)) !important;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { 
+            background: rgba(156, 163, 175, 0.3); 
+            border-radius: 20px; 
+        }
+        [data-theme='dark'] ::-webkit-scrollbar-thumb { 
+            background: rgba(255, 255, 255, 0.1); 
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.5); }
     </style>
 </head>
 
-<body class="bg-base-200 h-screen text-base-content transition-colors duration-300">
-    <div class="drawer drawer-open">
+<body class="bg-base-200 text-base-content transition-colors duration-300">
+    <div class="drawer drawer-open min-h-screen">
         <input id="my-drawer" type="checkbox" class="drawer-toggle" checked />
 
         <!-- MAIN CONTENT -->
-        <div class="drawer-content flex flex-col px-10 py-6 overflow-y-auto">
-            <x-navbar />
-
-            @yield('content')
+        <div class="drawer-content flex flex-col h-screen overflow-hidden">
+            <div class="flex-1 overflow-y-auto px-6 py-6 md:px-10">
+                <x-navbar />
+                @yield('content')
+            </div>
         </div>
 
         <x-sidebar />

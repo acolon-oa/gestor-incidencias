@@ -53,6 +53,10 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.users.index')->with('error', 'You cannot edit yourself from this panel.');
+        }
+
         $departments = Department::all();
         $roles = Role::all();
         return view('admin.users.edit', compact('user', 'departments', 'roles'));
@@ -60,6 +64,10 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.users.index')->with('error', 'You cannot update yourself from this panel.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
