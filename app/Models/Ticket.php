@@ -55,4 +55,14 @@ class Ticket extends Model
     {
         return $this->hasMany(Comment::class)->latest();
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(Attachment::class);
+    }
+
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class)->latest();
+    }
 }

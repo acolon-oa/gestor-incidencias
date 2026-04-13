@@ -37,7 +37,7 @@
         </div>
     @endif
 
-    <form id="incident-form" action="{{ route('admin.tickets.store') }}" method="POST">
+    <form id="incident-form" action="{{ route('admin.tickets.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="status" value="open">
         
@@ -67,6 +67,23 @@
                         required placeholder="What happened? Steps to reproduce...">{!! old('description') !!}</textarea>
                 </div>
 
+                <!-- Attachments -->
+                <div class="form-control w-full group">
+                    <label class="label mb-1">
+                        <span class="label-text font-bold text-base-content/60 text-sm uppercase tracking-wide group-focus-within:text-primary transition-colors">Internal Documentation / Evidence</span>
+                    </label>
+                    <div class="flex items-center justify-center w-full">
+                        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-base-content/10 border-dashed rounded-2xl cursor-pointer bg-base-100 hover:bg-base-200 transition-all group-hover:border-primary/50">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <x-heroicon-o-cloud-arrow-up class="w-8 h-8 text-base-content/30 group-hover:text-primary transition-colors mb-2" />
+                                <p class="mb-2 text-sm text-base-content/60 font-bold">Upload attachments (evidence, screenshots, logs)</p>
+                                <p class="text-[10px] text-base-content/30 uppercase font-black tracking-widest">PNG, JPG, PDF (MAX. 10MB)</p>
+                            </div>
+                            <input name="attachments[]" type="file" class="hidden" multiple />
+                        </label>
+                    </div>
+                </div>
+
             </div>
 
             <!-- METADATA COLUMN -->
@@ -77,7 +94,7 @@
                     <!-- Department -->
                     <div class="w-full">
                         <div class="mb-2"><span class="font-bold text-base-content/60 text-xs uppercase tracking-wider">Target Department</span></div>
-                        <select name="department_id" class="select select-bordered bg-base-200/50 border-base-content/10 rounded-xl font-medium w-full" required>
+                        <select name="department_id" class="select select-bordered bg-base-100 border-base-content/10 rounded-xl font-medium w-full" required>
                             <option value="" disabled selected>Select Department</option>
                             @foreach($departments as $department)
                                 <option value="{{ $department->id }}" {{ old('department_id') == $department->id ? 'selected' : '' }}>
@@ -90,7 +107,7 @@
                     <!-- Priority -->
                     <div class="w-full">
                         <div class="mb-2"><span class="font-bold text-base-content/60 text-xs uppercase tracking-wider">Priority</span></div>
-                        <select name="priority" class="select select-bordered bg-base-200/50 border-base-content/10 rounded-xl font-medium w-full" required>
+                        <select name="priority" class="select select-bordered bg-base-100 border-base-content/10 rounded-xl font-medium w-full" required>
                             <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Low</option>
                             <option value="medium" {{ old('priority', 'medium') == 'medium' ? 'selected' : '' }}>Medium</option>
                             <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>High</option>

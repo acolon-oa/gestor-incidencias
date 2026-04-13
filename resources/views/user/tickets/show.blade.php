@@ -46,22 +46,22 @@
         <div class="xl:col-span-2 space-y-8">
 
             {{-- Description --}}
-            <div class="bg-base-100 border border-base-content/5 rounded-3xl p-8 shadow-sm">
-                <h2 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] mb-6">Initial Report</h2>
-                <p class="text-base-content/80 leading-relaxed whitespace-pre-line text-lg font-medium">{{ $ticket->description }}</p>
+            <div class="bg-base-100 border border-base-content/5 rounded-3xl p-6 shadow-sm">
+                <h2 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] mb-3">Initial Report</h2>
+                <p class="text-base-content/70 leading-relaxed whitespace-pre-line text-base font-medium">{{ $ticket->description }}</p>
             </div>
 
             {{-- Conversation --}}
-            <div class="bg-base-100 border border-base-content/5 rounded-3xl p-8 shadow-sm">
-                <h2 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] mb-8">Conversation History</h2>
+            <div class="bg-base-100 border border-base-content/5 rounded-3xl p-8 shadow-sm h-[800px] flex flex-col">
+                <h2 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] mb-8 flex-none">Conversation History</h2>
 
                 @if($ticket->comments->isEmpty())
-                    <div class="text-center py-10 opacity-30">
-                        <x-heroicon-o-chat-bubble-left-right class="w-12 h-12 mx-auto mb-3" />
+                    <div class="flex-1 flex flex-col items-center justify-center opacity-30">
+                        <x-heroicon-o-chat-bubble-left-right class="w-12 h-12 mb-3" />
                         <p class="text-sm italic font-bold">No messages yet.</p>
                     </div>
                 @else
-                    <div class="space-y-6 mb-10">
+                    <div class="flex-1 space-y-6 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-base-content/10 scrollbar-track-transparent">
                         @foreach($ticket->comments as $comment)
                             <div class="flex {{ $comment->user_id === auth()->id() ? 'flex-row-reverse' : 'flex-row' }} gap-4">
                                 <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm flex-shrink-0">
@@ -74,6 +74,18 @@
                                     </div>
                                     <div class="px-5 py-4 rounded-3xl text-sm leading-relaxed {{ $comment->user_id === auth()->id() ? 'bg-primary text-white rounded-tr-sm shadow-md shadow-primary/10' : 'bg-base-200 text-base-content/90 rounded-tl-sm border border-base-content/5 shadow-sm' }}">
                                         {{ $comment->content }}
+
+                                        @if($comment->attachments->count() > 0)
+                                            <div class="mt-4 flex flex-wrap gap-2">
+                                                @foreach($comment->attachments as $attachment)
+                                                    <a href="{{ route('attachments.download', $attachment->id) }}" 
+                                                       class="flex items-center gap-2 px-3 py-2 rounded-xl {{ $comment->user_id === auth()->id() ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-base-300 hover:bg-base-content/10 text-base-content/60' }} transition-colors text-[10px] font-bold border border-transparent {{ $comment->user_id === auth()->id() ? '' : 'border-base-content/5' }}">
+                                                        <x-heroicon-o-document-arrow-down class="w-4 h-4" />
+                                                        <span class="truncate max-w-[150px]">{{ $attachment->filename }}</span>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -88,8 +100,30 @@
                             class="textarea w-full bg-base-200/50 border-base-content/5 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl p-6 text-sm leading-relaxed placeholder-base-content/20 min-h-[140px]"
                             placeholder="Add more information or ask a question..."
                             required></textarea>
-                        <div class="flex justify-end mt-4">
-                            <button type="submit" form="comment-form-user" class="btn btn-primary px-10 font-black shadow-lg shadow-primary/20">Send Response</button>
+                        <div class="flex flex-col gap-4 mt-4">
+                            <div class="flex items-center gap-2">
+                                <label class="btn btn-ghost btn-xs text-base-content/40 hover:text-primary lowercase font-normal gap-2">
+                                    <x-heroicon-o-paper-clip class="w-4 h-4" />
+                                    <span>Attach images or logs</span>
+                                    <input type="file" name="attachments[]" form="comment-form-user" class="hidden" multiple onchange="handleFileSelect(this, 'preview-user')" />
+                                </label>
+
+                                @if($ticket->attachments->where('comment_id', null)->count() > 0)
+                                    <div class="flex items-center gap-1.5 ml-2 pl-4 border-l border-base-content/10 overflow-x-auto pb-1 no-scrollbar max-w-[400px]">
+                                        <span class="text-[9px] font-black text-base-content/10 uppercase whitespace-nowrap mr-1">Initial:</span>
+                                        @foreach($ticket->attachments->where('comment_id', null) as $attachment)
+                                            <a href="{{ route('attachments.download', $attachment->id) }}" class="flex items-center gap-2 px-3 py-1.5 bg-base-300/30 hover:bg-primary/5 text-base-content/60 hover:text-primary rounded-xl transition-all text-xs font-bold border border-base-content/5 whitespace-nowrap shadow-sm">
+                                                <x-heroicon-o-document-arrow-down class="w-4 h-4" />
+                                                <span>{{ $attachment->filename }}</span>
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                            <div id="preview-user" class="flex flex-wrap gap-2 mb-2"></div>
+                            <div class="flex justify-end">
+                                <button type="submit" form="comment-form-user" class="btn btn-primary px-10 font-black shadow-lg shadow-primary/20">Send Response</button>
+                            </div>
                         </div>
                     </div>
                 @else
@@ -101,8 +135,8 @@
         </div>
 
         {{-- Info sidebar --}}
-        <div class="space-y-8">
-            <div class="bg-base-100 border border-base-content/5 rounded-3xl p-8 space-y-8 sticky top-8 shadow-sm">
+        <div class="space-y-8 sticky top-8 self-start">
+            <div class="bg-base-100 border border-base-content/5 rounded-3xl p-8 space-y-8 shadow-sm">
                 <h3 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] border-b border-base-content/5 pb-5">Incident Info</h3>
 
                 <div>
@@ -146,8 +180,27 @@
     </div>
 
     {{-- Separate comment form --}}
-    <form id="comment-form-user" action="{{ route('comments.store', $ticket->id) }}" method="POST" class="hidden">
+    <form id="comment-form-user" action="{{ route('comments.store', $ticket->id) }}" method="POST" class="hidden" enctype="multipart/form-data">
         @csrf
     </form>
+
+    <script>
+        function handleFileSelect(input, previewId) {
+            const preview = document.getElementById(previewId);
+            preview.innerHTML = '';
+            
+            if (input.files) {
+                Array.from(input.files).forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-2 px-3 py-1.5 bg-primary/5 text-primary rounded-xl text-[10px] font-black uppercase tracking-wider border border-primary/10';
+                    div.innerHTML = `
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L20.5 13" /></svg>
+                        <span>${file.name}</span>
+                    `;
+                    preview.appendChild(div);
+                });
+            }
+        }
+    </script>
 </div>
 @endsection

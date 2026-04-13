@@ -6,7 +6,9 @@ use App\Models\Comment;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketUpdated;
+use App\Models\Attachment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CommentController extends Controller
 {
@@ -14,45 +16,48 @@ class CommentController extends Controller
     {
         $request->validate([
             'content' => 'required|string',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
-        Comment::create([
+        $comment = Comment::create([
             'ticket_id' => $ticket->id,
             'user_id'   => auth()->id(),
             'content'   => $request->content,
         ]);
 
-        $ticket->load(['user', 'department', 'assignedTo']);
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('attachments/' . $ticket->id, 'public');
+                Attachment::create([
+                    'ticket_id' => $ticket->id,
+                    'comment_id' => $comment->id,
+                    'user_id'   => auth()->id(),
+                    'filename'  => $file->getClientOriginalName(),
+                    'path'      => $path,
+                    'mime_type' => $file->getMimeType(),
+                    'size'      => $file->getSize(),
+                ]);
+            }
+        }
 
-        // Notify relevant parties about the new comment
+        $ticket->load(['user', 'department', 'assignedTo']);
         $commenterId = auth()->id();
 
         // Notify the ticket owner (if not the one commenting)
         if ($ticket->user_id !== $commenterId) {
-            $ticket->user?->notify(new TicketUpdated($ticket, 'comment_added'));
+            $ticket->user?->notify(new TicketUpdated($ticket, 'comment_added', null, $comment->content));
         }
 
-        // Notify all admins (if commenter is not admin, notify all admins; if commenter is admin, notify other admins)
+        // Notify admins with details
         if (auth()->user()->hasRole('admin')) {
-            // Admin commenting → notify other admins and the ticket owner (already notified above)
-            User::role('admin')
+             User::role('admin')
                 ->where('id', '!=', $commenterId)
-                ->each(fn($admin) => $admin->notify(new TicketUpdated($ticket, 'comment_added')));
+                ->each(fn($admin) => $admin->notify(new TicketUpdated($ticket, 'comment_added', null, $comment->content)));
         } else {
-            // User commenting → notify all admins
-            User::role('admin')
-                ->each(fn($admin) => $admin->notify(new TicketUpdated($ticket, 'comment_added')));
+             User::role('admin')
+                ->each(fn($admin) => $admin->notify(new TicketUpdated($ticket, 'comment_added', null, $comment->content)));
         }
 
-        // Notify assigned agent if different from commenter and ticket owner
-        if (
-            $ticket->assigned_to_id &&
-            $ticket->assigned_to_id !== $commenterId &&
-            $ticket->assigned_to_id !== $ticket->user_id
-        ) {
-            $ticket->assignedTo?->notify(new TicketUpdated($ticket, 'comment_added'));
-        }
-
-        return back()->with('success', 'Comment added.');
+        return back();
     }
 }

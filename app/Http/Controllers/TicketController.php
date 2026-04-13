@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketCreated;
+use App\Models\Attachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class TicketController extends Controller
 {
@@ -34,6 +36,7 @@ class TicketController extends Controller
             'department'  => 'required|string|exists:departments,name',
             'priority'    => 'nullable|string|in:low,medium,high',
             'description' => 'required|string',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240', // 10MB limit
         ]);
 
         $department = \App\Models\Department::where('name', $validated['department'])->first();
@@ -46,6 +49,20 @@ class TicketController extends Controller
             'user_id'       => Auth::id(),
             'status'        => 'open',
         ]);
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('attachments/' . $ticket->id, 'public');
+                Attachment::create([
+                    'ticket_id' => $ticket->id,
+                    'user_id'   => Auth::id(),
+                    'filename'  => $file->getClientOriginalName(),
+                    'path'      => $path,
+                    'mime_type' => $file->getMimeType(),
+                    'size'      => $file->getSize(),
+                ]);
+            }
+        }
 
         // Notify all admins that a new ticket has been submitted
         $ticket->load(['user', 'department']);

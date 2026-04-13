@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Comment extends Model
 {
-    protected $fillable = ['ticket_id', 'user_id', 'content'];
+    protected $fillable = ['ticket_id', 'user_id', 'content', 'is_internal'];
 
     public function user()
     {
@@ -16,5 +16,10 @@ class Comment extends Model
     public function ticket()
     {
         return $this->belongsTo(Ticket::class);
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(Attachment::class);
     }
 }

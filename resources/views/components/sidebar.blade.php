@@ -27,7 +27,7 @@
             </li>
 
             {{-- SOLO ADMIN --}}
-            @role('admin')
+            @if(auth()->user()->hasRole('admin'))
             <li class="mb-1">
                 <a href="{{ route('admin.statistics.index') }}"
                    class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
@@ -45,7 +45,7 @@
                     <span>Users</span>
                 </a>
             </li>
-            @endrole
+            @endif
 
             <li class="mt-2 mb-1">
                 @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp

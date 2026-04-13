@@ -10,8 +10,12 @@
             <p class="opacity-60 text-lg mt-1">High-level performance metrics and operational insights.</p>
         </div>
         <div class="flex gap-2">
-            <span class="badge badge-lg border-none bg-primary/10 text-primary font-bold px-4 py-6">Last 30 Days</span>
-            <span class="badge badge-lg border-none bg-success/10 text-success font-bold px-4 py-6">Live Updates</span>
+            <a href="{{ route('admin.statistics.export-pdf') }}" class="btn btn-outline border-base-content/10 hover:bg-base-content/5 text-base-content font-bold">
+                <x-heroicon-o-document-arrow-down class="w-5 h-5 mr-1" />
+                Export PDF
+            </a>
+            <span class="badge badge-lg border-none bg-primary/10 text-primary font-bold px-4 py-6 hidden md:inline-flex">Last 30 Days</span>
+            <span class="badge badge-lg border-none bg-success/10 text-success font-bold px-4 py-6 hidden md:inline-flex">Live Updates</span>
         </div>
     </div>
 

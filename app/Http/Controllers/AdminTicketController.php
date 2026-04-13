@@ -6,7 +6,10 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Notifications\TicketCreated;
 use App\Notifications\TicketUpdated;
+use App\Models\AuditLog;
+use App\Models\Attachment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class AdminTicketController extends Controller
 {
@@ -43,8 +46,9 @@ class AdminTicketController extends Controller
     // Mostrar ticket
     public function show(Ticket $ticket)
     {
-        $ticket->load(['user', 'department', 'comments.user', 'assignedTo']);
-        return view('admin.tickets.show', compact('ticket'));
+        $ticket->load(['user', 'department', 'comments.user', 'assignedTo', 'attachments', 'auditLogs.user']);
+        $cannedResponses = \App\Models\CannedResponse::all();
+        return view('admin.tickets.show', compact('ticket', 'cannedResponses'));
     }
 
     // Formulario crear ticket
@@ -65,6 +69,7 @@ class AdminTicketController extends Controller
             'status'      => 'required|in:open,in_progress,closed',
             'priority'    => 'required|in:low,medium,high,urgent',
             'department_id' => 'required|exists:departments,id',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
         $ticket = Ticket::create([
@@ -76,6 +81,27 @@ class AdminTicketController extends Controller
             'user_id'        => auth()->id(), // Becomes the requester
             'assigned_to_id' => null, // Starts unassigned
         ]);
+
+        AuditLog::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => auth()->id(),
+            'type' => 'ticket_created',
+            'new_value' => 'Ticket created by assistant/admin',
+        ]);
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('attachments/' . $ticket->id, 'public');
+                Attachment::create([
+                    'ticket_id' => $ticket->id,
+                    'user_id'   => auth()->id(),
+                    'filename'  => $file->getClientOriginalName(),
+                    'path'      => $path,
+                    'mime_type' => $file->getMimeType(),
+                    'size'      => $file->getSize(),
+                ]);
+            }
+        }
 
         // Notify all other admins of new ticket
         $ticket->load(['user', 'department']);
@@ -99,20 +125,52 @@ class AdminTicketController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        $oldStatus = $ticket->status;
+        $oldPriority = $ticket->priority;
+        $oldAssignedTo = $ticket->assigned_to_id;
+        $oldDeptId = $ticket->department_id;
+
         if (isset($validated['department_id']) && $validated['department_id'] != $ticket->department_id) {
             $validated['assigned_to_id'] = null;
+            
+            AuditLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => auth()->id(),
+                'type' => 'department_change',
+                'old_value' => $ticket->department?->name,
+                'new_value' => \App\Models\Department::find($validated['department_id'])?->name,
+            ]);
         }
 
-        if (isset($validated['assigned_to_id']) && $validated['assigned_to_id'] !== null) {
-            $targetDeptId = $validated['department_id'] ?? $ticket->department_id;
-            $user = User::find($validated['assigned_to_id']);
-            if ($user->department_id && $user->department_id != $targetDeptId) {
-                return back()->withErrors(['assigned_to_id' => 'The selected agent does not belong to the correct department.']);
-            }
+        if (isset($validated['assigned_to_id']) && $validated['assigned_to_id'] !== $oldAssignedTo) {
+             AuditLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => auth()->id(),
+                'type' => 'assignment_change',
+                'old_value' => $ticket->assignedTo?->name ?? 'Unassigned',
+                'new_value' => User::find($validated['assigned_to_id'])?->name ?? 'Unassigned',
+            ]);
         }
 
-        $oldStatus = $ticket->status;
-        $oldAssignedTo = $ticket->assigned_to_id;
+        if (isset($validated['status']) && $validated['status'] !== $oldStatus) {
+             AuditLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => auth()->id(),
+                'type' => 'status_change',
+                'old_value' => $oldStatus,
+                'new_value' => $validated['status'],
+            ]);
+        }
+
+        if (isset($validated['priority']) && $validated['priority'] !== $oldPriority) {
+             AuditLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => auth()->id(),
+                'type' => 'priority_change',
+                'old_value' => $oldPriority,
+                'new_value' => $validated['priority'],
+            ]);
+        }
 
         if (isset($validated['status']) && $validated['status'] === 'closed') {
             $ticket->closed_at = now();
@@ -168,5 +226,12 @@ class AdminTicketController extends Controller
         Ticket::whereIn('id', $request->ticket_ids)->delete();
 
         return redirect()->route('admin.dashboard')->with('success', count($request->ticket_ids) . ' tickets deleted successfully.');
+    }
+
+    public function exportPdf(Ticket $ticket)
+    {
+        $ticket->load(['user', 'department', 'comments.user', 'assignedTo']);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.tickets.pdf', compact('ticket'));
+        return $pdf->download('ticket-' . $ticket->id . '.pdf');
     }
 }

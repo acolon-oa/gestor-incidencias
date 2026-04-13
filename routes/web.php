@@ -45,6 +45,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [\App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/attachments/{attachment}/download', [\App\Http\Controllers\AttachmentController::class, 'download'])->name('attachments.download');
 });
 
 // ====================
@@ -61,6 +63,8 @@ Route::middleware(['auth', 'role:admin'])
         // Bulk Actions
         Route::delete('/tickets/bulk-delete', [AdminTicketController::class, 'bulkDelete'])->name('tickets.bulk-delete');
 
+        Route::get('/tickets/{ticket}/export-pdf', [AdminTicketController::class, 'exportPdf'])->name('tickets.export-pdf');
+
         // Admin puede: listar, ver, crear y guardar tickets
         Route::resource('tickets', AdminTicketController::class)->only([
             'index',
@@ -73,6 +77,7 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
         Route::get('/statistics', [\App\Http\Controllers\Admin\StatisticsController::class, 'index'])->name('statistics.index');
+        Route::get('/statistics/export-pdf', [\App\Http\Controllers\Admin\StatisticsController::class, 'exportPdf'])->name('statistics.export-pdf');
     });
 
 // ====================

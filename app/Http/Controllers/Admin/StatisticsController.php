@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class StatisticsController extends Controller
 {
-    public function index()
+    private function getStatisticsData()
     {
         // 1. General Metrics
         $totalTickets = Ticket::count();
@@ -60,7 +60,7 @@ class StatisticsController extends Controller
         // 7. Recent Activity (Last 7 days)
         $ticketsLast7Days = Ticket::where('created_at', '>=', now()->subDays(7))->count();
 
-        return view('admin.statistics.index', compact(
+        return compact(
             'totalTickets',
             'totalUsers',
             'totalResolved',
@@ -71,6 +71,17 @@ class StatisticsController extends Controller
             'ticketsLast7Days',
             'monthlyTrend',
             'userEngagement'
-        ));
+        );
+    }
+
+    public function index()
+    {
+        return view('admin.statistics.index', $this->getStatisticsData());
+    }
+
+    public function exportPdf()
+    {
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.statistics.pdf', $this->getStatisticsData());
+        return $pdf->download('statistics-' . now()->format('Y-m-d') . '.pdf');
     }
 }
