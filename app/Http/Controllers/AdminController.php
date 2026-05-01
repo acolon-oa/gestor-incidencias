@@ -33,7 +33,6 @@ class AdminController extends Controller
 
     $tickets = $query->latest()->get();
 
-    $user = auth()->user();
     $openTicketsCount = \App\Models\Ticket::where('status', 'open')
         ->when(!$user->hasRole('admin'), fn($q) => $q->where('department_id', $user->department_id))
         ->count();

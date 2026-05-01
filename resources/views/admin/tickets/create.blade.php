@@ -18,11 +18,20 @@
         </div>
         <div class="flex gap-3">
             <a href="{{ route('admin.dashboard') }}" class="btn btn-ghost px-6 font-medium">Discard</a>
-            <button type="submit" form="incident-form" class="btn btn-primary px-10 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all font-bold">
-                Submit Ticket
+            <button type="submit" form="incident-form" class="btn btn-primary px-10 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all font-bold" id="submit-btn">
+                <span class="loading loading-spinner loading-sm hidden" id="submit-spinner"></span>
+                <span id="submit-text">Submit Ticket</span>
             </button>
         </div>
     </div>
+
+    <script>
+        document.getElementById('incident-form').addEventListener('submit', function() {
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-spinner').classList.remove('hidden');
+            document.getElementById('submit-text').innerText = 'Uploading...';
+        });
+    </script>
 
     @if($errors->any())
         <div class="alert alert-error mb-8 rounded-2xl border-none shadow-sm bg-red-500/10 text-red-500">
@@ -72,17 +81,61 @@
                     <label class="label mb-1">
                         <span class="label-text font-bold text-base-content/60 text-sm uppercase tracking-wide group-focus-within:text-primary transition-colors">Internal Documentation / Evidence</span>
                     </label>
-                    <div class="flex items-center justify-center w-full">
-                        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-base-content/10 border-dashed rounded-2xl cursor-pointer bg-base-100 hover:bg-base-200 transition-all group-hover:border-primary/50">
+                    <div class="flex flex-col gap-4">
+                        <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-base-content/10 border-dashed rounded-2xl cursor-pointer bg-base-100 hover:bg-base-200 transition-all group-hover:border-primary/50" id="dropzone">
                             <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                <x-heroicon-o-cloud-arrow-up class="w-8 h-8 text-base-content/30 group-hover:text-primary transition-colors mb-2" />
-                                <p class="mb-2 text-sm text-base-content/60 font-bold">Upload attachments (evidence, screenshots, logs)</p>
+                                <x-heroicon-o-cloud-arrow-up class="w-8 h-8 text-base-content/30 group-hover:text-primary transition-colors mb-2" id="upload-icon" />
+                                <p class="mb-2 text-sm text-base-content/60 font-bold" id="upload-text">Upload attachments (evidence, screenshots, logs)</p>
                                 <p class="text-[10px] text-base-content/30 uppercase font-black tracking-widest">PNG, JPG, PDF (MAX. 10MB)</p>
                             </div>
-                            <input name="attachments[]" type="file" class="hidden" multiple />
+                            <input name="attachments[]" type="file" id="file-input" class="hidden" multiple />
                         </label>
+
+                        <!-- File List Preview -->
+                        <div id="file-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 hidden">
+                            <!-- Files will be injected here -->
+                        </div>
                     </div>
                 </div>
+
+                <script>
+                    document.getElementById('file-input').addEventListener('change', function(e) {
+                        const fileList = document.getElementById('file-list');
+                        const uploadText = document.getElementById('upload-text');
+                        const uploadIcon = document.getElementById('upload-icon');
+                        const dropzone = document.getElementById('dropzone');
+                        
+                        fileList.innerHTML = '';
+                        
+                        if (this.files.length > 0) {
+                            fileList.classList.remove('hidden');
+                            uploadText.innerHTML = `<span class="text-primary">${this.files.length} files selected</span>`;
+                            uploadIcon.classList.add('text-primary');
+                            dropzone.classList.add('border-primary/30', 'bg-primary/5');
+                            
+                            Array.from(this.files).forEach(file => {
+                                const size = (file.size / 1024 / 1024).toFixed(2);
+                                const fileDiv = document.createElement('div');
+                                fileDiv.className = 'flex items-center gap-3 p-3 bg-base-100 border border-base-content/5 rounded-xl shadow-sm';
+                                fileDiv.innerHTML = `
+                                    <div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    </div>
+                                    <div class="overflow-hidden">
+                                        <div class="text-xs font-bold text-base-content truncate">${file.name}</div>
+                                        <div class="text-[10px] font-medium text-base-content/40 uppercase tracking-widest">${size} MB</div>
+                                    </div>
+                                `;
+                                fileList.appendChild(fileDiv);
+                            });
+                        } else {
+                            fileList.classList.add('hidden');
+                            uploadText.innerText = 'Upload attachments (evidence, screenshots, logs)';
+                            uploadIcon.classList.remove('text-primary');
+                            dropzone.classList.remove('border-primary/30', 'bg-primary/5');
+                        }
+                    });
+                </script>
 
             </div>
 

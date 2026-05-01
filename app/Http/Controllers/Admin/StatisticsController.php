@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Models\Department;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class StatisticsController extends Controller
 {
@@ -35,14 +36,7 @@ class StatisticsController extends Controller
                 ];
             });
 
-        // 4. Top Technicians (Admins with most resolved tickets)
-        $topTechnicians = User::role('admin')
-            ->withCount(['assignedTickets' => function($query) {
-                $query->where('status', 'closed');
-            }])
-            ->orderBy('assigned_tickets_count', 'desc')
-            ->take(5)
-            ->get();
+
 
         // 5. Monthly Trend (Tickets per month for the last 6 months)
         $monthlyTrend = Ticket::select(
@@ -54,8 +48,7 @@ class StatisticsController extends Controller
             ->orderBy('month')
             ->get();
 
-        // 6. User Engagement (Tickets created by department)
-        $userEngagement = Department::withCount('users')->get();
+
 
         // 7. Recent Activity (Last 7 days)
         $ticketsLast7Days = Ticket::where('created_at', '>=', now()->subDays(7))->count();
@@ -67,10 +60,8 @@ class StatisticsController extends Controller
             'resolutionRate',
             'statusCounts',
             'departmentStats',
-            'topTechnicians',
             'ticketsLast7Days',
-            'monthlyTrend',
-            'userEngagement'
+            'monthlyTrend'
         );
     }
 
@@ -81,7 +72,7 @@ class StatisticsController extends Controller
 
     public function exportPdf()
     {
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.statistics.pdf', $this->getStatisticsData());
+        $pdf = Pdf::loadView('admin.statistics.pdf', $this->getStatisticsData());
         return $pdf->download('statistics-' . now()->format('Y-m-d') . '.pdf');
     }
 }

@@ -207,8 +207,12 @@
                         <h4 class="text-[10px] font-black text-base-content/20 uppercase tracking-[0.2em] mb-4">Metadata</h4>
                         <div class="space-y-4 text-xs">
                             <div class="flex justify-between items-center font-bold">
+                                <span class="text-base-content/40">Requester</span>
+                                <span class="text-base-content/80">{{ $ticket->user->name }}</span>
+                            </div>
+                            <div class="flex justify-between items-center font-bold">
                                 <span class="text-base-content/40">Created at</span>
-                                <span class="text-base-content/80">{{ $ticket->created_at->format('M d, Y') }}</span>
+                                <span class="text-base-content/80">{{ $ticket->created_at->timezone('Europe/Madrid')->format('M d, Y H:i') }}</span>
                             </div>
                             <div class="flex justify-between items-center font-bold">
                                 <span class="text-base-content/40">Last activity</span>

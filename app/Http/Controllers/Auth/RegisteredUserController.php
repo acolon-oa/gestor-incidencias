@@ -19,6 +19,10 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
+        $allowRegistration = \App\Models\Setting::where('key', 'allow_registration')->value('value');
+        if ($allowRegistration === '0') {
+            abort(403, 'Registration is currently disabled.');
+        }
         return view('auth.register');
     }
 
@@ -29,6 +33,10 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $allowRegistration = \App\Models\Setting::where('key', 'allow_registration')->value('value');
+        if ($allowRegistration === '0') {
+            abort(403, 'Registration is currently disabled.');
+        }
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],

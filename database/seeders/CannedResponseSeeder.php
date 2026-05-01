@@ -7,12 +7,8 @@ use Illuminate\Database\Seeder;
 
 class CannedResponseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function up(): void
+    public function run(): void
     {
-       // Do nothing if already has data
        if (CannedResponse::count() > 0) return;
 
        $responses = [
@@ -37,10 +33,5 @@ class CannedResponseSeeder extends Seeder
        foreach ($responses as $response) {
            CannedResponse::create($response);
        }
-    }
-
-    public function run(): void
-    {
-        $this->up();
     }
 }

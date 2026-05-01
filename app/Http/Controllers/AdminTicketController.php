@@ -10,6 +10,7 @@ use App\Models\AuditLog;
 use App\Models\Attachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminTicketController extends Controller
 {
@@ -46,6 +47,11 @@ class AdminTicketController extends Controller
     // Mostrar ticket
     public function show(Ticket $ticket)
     {
+        $user = auth()->user();
+        if (!$user->hasRole('admin') && $ticket->department_id !== $user->department_id) {
+            abort(403, 'Unauthorized access to this ticket.');
+        }
+
         $ticket->load(['user', 'department', 'comments.user', 'assignedTo', 'attachments', 'auditLogs.user']);
         $cannedResponses = \App\Models\CannedResponse::all();
         return view('admin.tickets.show', compact('ticket', 'cannedResponses'));
@@ -109,13 +115,23 @@ class AdminTicketController extends Controller
             ->where('id', '!=', auth()->id())
             ->each(fn($admin) => $admin->notify(new TicketCreated($ticket)));
 
+        $successMessage = 'Ticket created successfully.';
+        if ($request->hasFile('attachments')) {
+            $successMessage .= ' ' . count($request->file('attachments')) . ' files attached.';
+        }
+
         return redirect()->route('admin.dashboard')
-                         ->with('success', 'Ticket created successfully.');
+                         ->with('success', $successMessage);
     }
 
     // Actualizar ticket (estado, asignación, etc)
     public function update(Request $request, Ticket $ticket)
     {
+        $user = auth()->user();
+        if (!$user->hasRole('admin') && $ticket->department_id !== $user->department_id) {
+            abort(403, 'Unauthorized access to this ticket.');
+        }
+
         $validated = $request->validate([
             'status' => 'nullable|in:open,in_progress,closed',
             'assigned_to_id' => 'nullable|exists:users,id',
@@ -212,6 +228,11 @@ class AdminTicketController extends Controller
     // Eliminar ticket
     public function destroy(Ticket $ticket)
     {
+        $user = auth()->user();
+        if (!$user->hasRole('admin') && $ticket->department_id !== $user->department_id) {
+            abort(403, 'Unauthorized access to this ticket.');
+        }
+
         $ticket->delete();
         return redirect()->route('admin.dashboard')->with('success', 'Ticket deleted successfully.');
     }
@@ -230,8 +251,13 @@ class AdminTicketController extends Controller
 
     public function exportPdf(Ticket $ticket)
     {
+        $user = auth()->user();
+        if (!$user->hasRole('admin') && $ticket->department_id !== $user->department_id) {
+            abort(403, 'Unauthorized access to this ticket.');
+        }
+
         $ticket->load(['user', 'department', 'comments.user', 'assignedTo']);
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.tickets.pdf', compact('ticket'));
+        $pdf = Pdf::loadView('admin.tickets.pdf', compact('ticket'));
         return $pdf->download('ticket-' . $ticket->id . '.pdf');
     }
 }

@@ -47,8 +47,20 @@
 
             {{-- Description --}}
             <div class="bg-base-100 border border-base-content/5 rounded-3xl p-6 shadow-sm">
-                <h2 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] mb-3">Initial Report</h2>
+                <h2 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] mb-3">Description</h2>
                 <p class="text-base-content/70 leading-relaxed whitespace-pre-line text-base font-medium">{{ $ticket->description }}</p>
+
+                @if($ticket->attachments->where('comment_id', null)->count() > 0)
+                    <div class="mt-6 pt-6 border-t border-base-content/5 flex flex-wrap gap-3">
+                        @foreach($ticket->attachments->where('comment_id', null) as $attachment)
+                            <a href="{{ route('attachments.download', $attachment->id) }}" class="flex items-center gap-3 px-4 py-2 bg-base-200/50 hover:bg-primary/5 text-base-content/60 hover:text-primary rounded-2xl transition-all text-xs font-bold border border-base-content/5 shadow-sm">
+                                <x-heroicon-o-document-arrow-down class="w-5 h-5" />
+                                <span>{{ $attachment->filename }}</span>
+                                <span class="text-[10px] opacity-40">({{ number_format($attachment->size / 1024, 1) }} KB)</span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             {{-- Conversation --}}
@@ -108,16 +120,7 @@
                                     <input type="file" name="attachments[]" form="comment-form-user" class="hidden" multiple onchange="handleFileSelect(this, 'preview-user')" />
                                 </label>
 
-                                @if($ticket->attachments->where('comment_id', null)->count() > 0)
-                                    <div class="flex items-center gap-1.5 ml-2 pl-4 border-l border-base-content/10 overflow-x-auto pb-1 no-scrollbar max-w-[400px]">
-                                        <span class="text-[9px] font-black text-base-content/10 uppercase whitespace-nowrap mr-1">Initial:</span>
-                                        @foreach($ticket->attachments->where('comment_id', null) as $attachment)
-                                            <a href="{{ route('attachments.download', $attachment->id) }}" class="flex items-center gap-2 px-3 py-1.5 bg-base-300/30 hover:bg-primary/5 text-base-content/60 hover:text-primary rounded-xl transition-all text-xs font-bold border border-base-content/5 whitespace-nowrap shadow-sm">
-                                                <x-heroicon-o-document-arrow-down class="w-4 h-4" />
-                                                <span>{{ $attachment->filename }}</span>
-                                            </a>
-                                        @endforeach
-                                    </div>
+                                @if(false) {{-- Moved to description section --}}
                                 @endif
                             </div>
                             <div id="preview-user" class="flex flex-wrap gap-2 mb-2"></div>
@@ -137,37 +140,51 @@
         {{-- Info sidebar --}}
         <div class="space-y-8 sticky top-8 self-start">
             <div class="bg-base-100 border border-base-content/5 rounded-3xl p-8 space-y-8 shadow-sm">
-                <h3 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] border-b border-base-content/5 pb-5">Incident Info</h3>
+                <h3 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] border-b border-base-content/5 pb-5">Management Panel</h3>
 
-                <div>
-                    <p class="text-base-content/40 text-[10px] font-black uppercase tracking-widest mb-2">Assigned Agent</p>
-                    @if($ticket->assignedTo)
-                        <div class="flex items-center gap-3 bg-base-200/50 p-3 rounded-2xl">
-                             <div class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-xs">
-                                {{ strtoupper(substr($ticket->assignedTo->name, 0, 1)) }}
-                             </div>
-                             <span class="font-bold text-base-content text-sm">{{ $ticket->assignedTo->name }}</span>
-                        </div>
-                    @else
-                        <p class="text-sm text-base-content/40 italic font-bold">Waiting for assignment...</p>
-                    @endif
-                </div>
+                <form action="{{ route('user.tickets.update', $ticket->id) }}" method="POST" class="space-y-6">
+                    @csrf
+                    @method('PATCH')
 
-                <div>
-                    <p class="text-base-content/40 text-[10px] font-black uppercase tracking-widest mb-2">Department</p>
-                    <p class="font-bold text-base-content">{{ $ticket->department->name ?? 'General' }}</p>
-                </div>
+                    <div class="w-full">
+                        <div class="mb-3"><span class="font-black text-base-content/40 text-[10px] uppercase tracking-widest">Global Status</span></div>
+                        <select name="status" class="select select-bordered bg-base-100 border-base-content/10 rounded-2xl font-bold w-full text-xs">
+                            <option value="open" {{ $ticket->status == 'open' ? 'selected' : '' }}>Open</option>
+                            <option value="in_progress" {{ $ticket->status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                            <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>Resolved</option>
+                        </select>
+                    </div>
+
+                    <div class="w-full">
+                        <div class="mb-3"><span class="font-black text-base-content/40 text-[10px] uppercase tracking-widest">Assign to Agent</span></div>
+                        <select name="assigned_to_id" class="select select-bordered bg-base-100 border-base-content/10 rounded-2xl font-bold w-full text-xs">
+                            <option value="">Unassigned</option>
+                            @php
+                                $agents = \App\Models\User::role('admin')->get();
+                            @endphp
+                            @foreach($agents as $agent)
+                                <option value="{{ $agent->id }}" {{ $ticket->assigned_to_id == $agent->id ? 'selected' : '' }}>{{ $agent->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full font-black rounded-2xl shadow-xl shadow-primary/20 py-4 h-auto">Sync Changes</button>
+                </form>
 
                 <div class="pt-6 border-t border-base-content/5 mt-4">
-                    <h4 class="text-[10px] font-black text-base-content/20 uppercase tracking-[0.2em] mb-4">Timestamps</h4>
+                    <h4 class="text-[10px] font-black text-base-content/20 uppercase tracking-[0.2em] mb-4">Incident Info</h4>
                     <div class="space-y-4 text-xs">
                         <div class="flex justify-between items-center font-bold">
-                            <span class="text-base-content/40">Created</span>
-                            <span class="text-base-content/80">{{ $ticket->created_at->format('M d, Y') }}</span>
+                            <span class="text-base-content/40">Requester</span>
+                            <span class="text-base-content/80">{{ $ticket->user->name }}</span>
                         </div>
                         <div class="flex justify-between items-center font-bold">
-                            <span class="text-base-content/40">Updated</span>
-                            <span class="text-base-content/80">{{ $ticket->updated_at->diffForHumans() }}</span>
+                            <span class="text-base-content/40">Department</span>
+                            <span class="text-base-content/80">{{ $ticket->department->name ?? 'General' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center font-bold">
+                            <span class="text-base-content/40">Created</span>
+                            <span class="text-base-content/80">{{ $ticket->created_at->timezone('Europe/Madrid')->format('M d, Y H:i') }}</span>
                         </div>
                         <div class="flex justify-between items-center font-bold">
                             <span class="text-base-content/40">ID</span>

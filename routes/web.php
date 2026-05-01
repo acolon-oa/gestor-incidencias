@@ -78,6 +78,11 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
         Route::get('/statistics', [\App\Http\Controllers\Admin\StatisticsController::class, 'index'])->name('statistics.index');
         Route::get('/statistics/export-pdf', [\App\Http\Controllers\Admin\StatisticsController::class, 'exportPdf'])->name('statistics.export-pdf');
+
+
+        Route::resource('canned-responses', \App\Http\Controllers\Admin\CannedResponseController::class)->except(['show']);
+        Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
+
     });
 
 // ====================
@@ -97,6 +102,7 @@ Route::middleware(['auth', 'role:user'])
             'create',
             'store',
             'show',
+            'update',
         ]);
     });
 

@@ -45,10 +45,24 @@
                 <h2 class="text-lg font-black text-base-content tracking-tight">Recent Activity</h2>
                 <p class="text-xs text-base-content/40 mt-0.5 font-medium italic">Latest updates on your reported incidents</p>
             </div>
-            <a href="{{ route('user.tickets.create') }}" class="btn btn-primary rounded-xl gap-2 px-8 font-black shadow-lg shadow-primary/20">
-                <x-heroicon-o-plus class="w-5 h-5" />
-                New Incident
-            </a>
+            
+            <form action="{{ route('user.dashboard') }}" method="GET" class="flex items-center gap-2">
+                <div class="join border border-base-content/10 rounded-2xl overflow-hidden shadow-sm bg-base-100">
+                    <input type="text" name="ticket_id" value="{{ request('ticket_id') }}" placeholder="Search ID..." class="input input-sm join-item w-28 bg-transparent focus:outline-none text-xs font-bold" />
+                    <select name="status" class="select select-sm join-item bg-transparent focus:outline-none text-xs font-bold border-l border-base-content/10">
+                        <option value="All" {{ request('status') == 'All' ? 'selected' : '' }}>All Status</option>
+                        <option value="Open" {{ request('status') == 'Open' || (!request()->has('status') && !request()->has('ticket_id')) ? 'selected' : '' }}>Only Open</option>
+                        <option value="In Progress" {{ request('status') == 'In Progress' ? 'selected' : '' }}>In Progress</option>
+                        <option value="Resolved" {{ request('status') == 'Resolved' ? 'selected' : '' }}>Resolved Only</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary join-item px-6 font-bold">Search</button>
+                </div>
+                @if(request()->anyFilled(['ticket_id', 'status']))
+                    <a href="{{ route('user.dashboard') }}" class="btn btn-sm btn-ghost btn-circle" title="Reset filters">
+                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                    </a>
+                @endif
+            </form>
         </div>
 
         <div class="overflow-x-auto">

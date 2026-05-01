@@ -3,7 +3,7 @@
 
         <section class="flex items-center mb-8 p-2">
             <img src="{{ asset('images/laravel.svg') }}" alt="Logo" class="w-10 h-10 mr-3">
-            <div class="text-2xl font-bold text-base-content">HelpDesk</div>
+            <div class="text-2xl font-bold text-base-content">{{ config('app.name') }}</div>
         </section>
 
         <ul class="menu w-full grow text-md p-0">
@@ -45,6 +45,28 @@
                     <span>Users</span>
                 </a>
             </li>
+
+
+
+            <li class="mb-1">
+                <a href="{{ route('admin.canned-responses.index') }}"
+                   class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
+                   {{ request()->routeIs('admin.canned-responses.*') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                    <x-heroicon-o-bolt class="w-5 h-5" />
+                    <span>Canned Responses</span>
+                </a>
+            </li>
+
+            <li class="mb-1">
+                <a href="{{ route('admin.audit-logs.index') }}"
+                   class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
+                   {{ request()->routeIs('admin.audit-logs.*') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                    <x-heroicon-o-clipboard-document-list class="w-5 h-5" />
+                    <span>Audit Logs</span>
+                </a>
+            </li>
+
+
             @endif
 
             <li class="mt-2 mb-1">

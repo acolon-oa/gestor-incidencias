@@ -21,7 +21,7 @@
 
         /* Dark mode contrast fixes */
         [data-theme='dark'] {
-            color_scheme: dark;
+            color-scheme: dark;
             --b1: 220 15% 12%; /* Slightly lighter base-100 for better distinction */
             --b2: 220 15% 8%;   /* Darker base-200 */
         }
@@ -101,23 +101,7 @@
         <div class="drawer-content flex flex-col h-screen overflow-hidden">
             <div class="flex-1 overflow-y-auto px-6 py-6 md:px-10 space-y-4">
                 
-                @if(isset($globalAnnouncements) && $globalAnnouncements->count() > 0)
-                    <div class="space-y-3 mb-6">
-                        @foreach($globalAnnouncements as $announcement)
-                            <div class="alert shadow-sm rounded-2xl border-none 
-                                {{ $announcement->type === 'error' ? 'bg-red-500/10 text-red-500' : 
-                                   ($announcement->type === 'warning' ? 'bg-amber-500/10 text-amber-500' : 
-                                   ($announcement->type === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 
-                                   'bg-blue-500/10 text-blue-500')) }}">
-                                <x-heroicon-o-megaphone class="w-5 h-5 flex-shrink-0" />
-                                <div class="flex-1">
-                                    <span class="text-sm font-bold uppercase tracking-widest opacity-40">{{ strtoupper($announcement->type) }}</span>
-                                    <p class="font-medium text-sm">{{ $announcement->message }}</p>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
+
 
                 <x-navbar />
                 @yield('content')
@@ -126,5 +110,12 @@
 
         <x-sidebar />
     </div>
+    @auth
+        <div class="fixed bottom-8 right-10 pointer-events-none z-[9999] opacity-20 select-none">
+            <span class="text-2xl font-black uppercase tracking-[0.3em] text-base-content whitespace-nowrap">
+                {{ auth()->user()->department->name ?? 'N/A' }}
+            </span>
+        </div>
+    @endauth
 </body>
 </html>

@@ -38,6 +38,9 @@ class DatabaseSeeder extends Seeder
             $user->assignRole($userRole);
         }
 
-        $this->call(DepartmentSeeder::class);
+        $this->call([
+            DepartmentSeeder::class,
+            CannedResponseSeeder::class,
+        ]);
     }
 }
