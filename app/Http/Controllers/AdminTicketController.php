@@ -260,4 +260,71 @@ class AdminTicketController extends Controller
         $pdf = Pdf::loadView('admin.tickets.pdf', compact('ticket'));
         return $pdf->download('ticket-' . $ticket->id . '.pdf');
     }
+
+    public function kanban()
+    {
+        $user = auth()->user();
+        $query = Ticket::with(['user', 'department', 'assignedTo']);
+
+        if (!$user->hasRole('admin')) {
+            $query->where('department_id', $user->department_id);
+        }
+
+        $tickets = $query->get();
+
+        $kanban = [
+            'open' => $tickets->where('status', 'open'),
+            'in_progress' => $tickets->where('status', 'in_progress'),
+            'closed' => $tickets->where('status', 'closed'),
+        ];
+
+        return view('admin.tickets.kanban', compact('kanban'));
+    }
+
+    public function updateStatusAjax(Request $request, Ticket $ticket)
+    {
+        $user = auth()->user();
+        if (!$user->hasRole('admin') && $ticket->department_id !== $user->department_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:open,in_progress,closed',
+        ]);
+
+        $oldStatus = $ticket->status;
+
+        if ($validated['status'] !== $oldStatus) {
+            AuditLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => auth()->id(),
+                'type' => 'status_change',
+                'old_value' => $oldStatus,
+                'new_value' => $validated['status'],
+            ]);
+
+            if ($validated['status'] === 'closed') {
+                $ticket->closed_at = now();
+            }
+
+            $ticket->status = $validated['status'];
+            $ticket->save();
+
+            // Notifications
+            if ($ticket->user_id !== auth()->id()) {
+                $ticket->user?->notify(new TicketUpdated(
+                    $ticket,
+                    'status_changed',
+                    $oldStatus,
+                    $validated['status']
+                ));
+            }
+            
+            User::role('admin')
+                ->where('id', '!=', auth()->id())
+                ->each(fn($admin) => $admin->notify(new TicketUpdated($ticket, 'status_changed', $oldStatus, $validated['status'])));
+        }
+
+        return response()->json(['success' => true]);
+    }
 }

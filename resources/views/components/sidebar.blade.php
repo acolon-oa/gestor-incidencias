@@ -2,8 +2,10 @@
     <div class="flex min-h-full flex-col bg-base-100 w-64 p-4 text-base border-r border-base-content/5">
 
         <section class="flex items-center mb-8 p-2">
-            <img src="{{ asset('images/laravel.svg') }}" alt="Logo" class="w-10 h-10 mr-3">
-            <div class="text-2xl font-bold text-base-content">{{ config('app.name') }}</div>
+            <!-- Logo Modo Claro -->
+            <img src="{{ asset('images/velox.png') }}" alt="Logo" class="mr-3 block dark:hidden">
+            <!-- Logo Modo Noche -->
+            <img src="{{ asset('images/velox-blanco.png') }}" alt="Logo" class="mr-3 hidden dark:block">
         </section>
 
         <ul class="menu w-full grow text-md p-0">
@@ -11,23 +13,70 @@
             <li class="mb-1">
                 <a href="{{ route('dashboard') }}"
                    class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
-                   {{ request()->routeIs('dashboard') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                   {{ (request()->routeIs(['dashboard', 'admin.dashboard', 'user.dashboard']) && request('view') !== 'personal' && request('status') !== 'Resolved') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
                     <x-heroicon-o-home class="w-5 h-5" />
                     <span>Dashboard</span>
                 </a>
             </li>
 
             <li class="mb-1">
-                <a href="{{ auth()->user()->hasRole('admin') ? route('admin.tickets.index') : route('user.dashboard') }}"
+                <a href="{{ auth()->user()->hasRole('admin') ? route('admin.tickets.index') : route('user.dashboard', ['view' => 'personal']) }}"
                    class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
-                   {{ request()->routeIs('admin.tickets.*') || request()->routeIs('user.tickets.*') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                   {{ (request()->routeIs('admin.tickets.*') || (request()->routeIs('user.dashboard') && request('view') === 'personal' && request('status') !== 'Resolved')) ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
                     <x-heroicon-o-inbox class="w-5 h-5" />
-                    <span>Tickets</span>
+                    <span>{{ auth()->user()->hasRole('admin') ? 'Tickets' : 'My Tickets' }}</span>
+                </a>
+            </li>
+
+            @if(!auth()->user()->hasRole('admin'))
+            <li class="mb-1">
+                <a href="{{ route('user.dashboard', ['status' => 'Resolved', 'view' => request('view', 'department')]) }}"
+                   class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
+                   {{ (request()->routeIs('user.dashboard') && request('status') === 'Resolved') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                    <x-heroicon-o-clock class="w-5 h-5" />
+                    <span>History</span>
+                </a>
+            </li>
+
+            <li class="mb-1">
+                <a href="{{ route('user.tickets.kanban') }}"
+                   class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
+                   {{ request()->routeIs('user.tickets.kanban') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                    <x-heroicon-o-view-columns class="w-5 h-5" />
+                    <span>Agile Board</span>
+                </a>
+            </li>
+
+            <li class="mb-1">
+                <a href="{{ route('user.statistics.index') }}"
+                   class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
+                   {{ request()->routeIs('user.statistics.*') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                    <x-heroicon-o-chart-bar class="w-5 h-5" />
+                    <span>Statistics</span>
+                </a>
+            </li>
+            @endif
+
+            <li class="mb-1">
+                <a href="{{ auth()->user()->hasRole('admin') ? route('admin.faqs.index') : route('user.faqs.index') }}"
+                   class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
+                   {{ (request()->routeIs('user.faqs.index') || request()->routeIs('admin.faqs.*')) ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                    <x-heroicon-o-question-mark-circle class="w-5 h-5" />
+                    <span>Knowledge Base</span>
                 </a>
             </li>
 
             {{-- SOLO ADMIN --}}
             @if(auth()->user()->hasRole('admin'))
+            <li class="mb-1">
+                <a href="{{ route('admin.tickets.kanban') }}"
+                   class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
+                   {{ request()->routeIs('admin.tickets.kanban') ? 'bg-primary/10 text-primary' : 'text-base-content/70 hover:bg-base-200 hover:text-base-content' }}">
+                    <x-heroicon-o-view-columns class="w-5 h-5" />
+                    <span>Agile Board</span>
+                </a>
+            </li>
+
             <li class="mb-1">
                 <a href="{{ route('admin.statistics.index') }}"
                    class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
@@ -69,7 +118,10 @@
 
             @endif
 
-            <li class="mt-2 mb-1">
+        </ul>
+
+        <ul class="menu w-full p-0 mt-auto border-t border-base-content/5 pt-4 mb-2">
+            <li class="mb-1">
                 @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
                 <a href="{{ route('notifications.index') }}"
                    class="flex items-center gap-3 rounded-xl p-3 font-semibold transition-colors
@@ -90,10 +142,9 @@
                     <span>Settings</span>
                 </a>
             </li>
-
         </ul>
 
-        <hr class="border-t border-base-content/5 my-3">
+
 
         <div class="flex items-center justify-between gap-3 p-2 bg-base-200/50 rounded-2xl mb-2">
             <div class="flex items-center gap-3 overflow-hidden">

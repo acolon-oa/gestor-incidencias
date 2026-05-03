@@ -65,6 +65,10 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::get('/tickets/{ticket}/export-pdf', [AdminTicketController::class, 'exportPdf'])->name('tickets.export-pdf');
 
+        // Kanban Board
+        Route::get('/tickets-kanban', [AdminTicketController::class, 'kanban'])->name('tickets.kanban');
+        Route::patch('/tickets/{ticket}/status', [AdminTicketController::class, 'updateStatusAjax'])->name('tickets.update-status-ajax');
+
         // Admin puede: listar, ver, crear y guardar tickets
         Route::resource('tickets', AdminTicketController::class)->only([
             'index',
@@ -81,6 +85,7 @@ Route::middleware(['auth', 'role:admin'])
 
 
         Route::resource('canned-responses', \App\Http\Controllers\Admin\CannedResponseController::class)->except(['show']);
+        Route::resource('faqs', \App\Http\Controllers\Admin\FaqController::class);
         Route::get('/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
 
     });
@@ -104,6 +109,18 @@ Route::middleware(['auth', 'role:user'])
             'show',
             'update',
         ]);
+        
+        // Kanban Board para usuarios
+        Route::get('/tickets-kanban', [TicketController::class, 'kanban'])->name('tickets.kanban');
+        Route::patch('/tickets/{ticket}/status', [TicketController::class, 'updateStatusAjax'])->name('tickets.update-status-ajax');
+        Route::get('/tickets/{ticket}/export-pdf', [TicketController::class, 'exportPdf'])->name('tickets.export-pdf');
+        
+        // FAQs
+        Route::get('/faqs', [\App\Http\Controllers\FaqController::class, 'index'])->name('faqs.index');
+
+        // Statistics
+        Route::get('/statistics', [\App\Http\Controllers\User\StatisticsController::class, 'index'])->name('statistics.index');
+        Route::get('/statistics/export-pdf', [\App\Http\Controllers\User\StatisticsController::class, 'exportPdf'])->name('statistics.export-pdf');
     });
 
 // Auth (Breeze)

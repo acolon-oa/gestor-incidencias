@@ -20,7 +20,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Executive Statistics Report</h1>
+        <h1>Statistics Report</h1>
         <p>Generated on {{ now()->format('M d, Y H:i') }}</p>
     </div>
 

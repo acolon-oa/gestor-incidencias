@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
@@ -77,12 +77,14 @@ class StatisticsController extends Controller
 
     public function index()
     {
-        return view('admin.statistics.index', $this->getStatisticsData());
+        $departmentId = auth()->user()->department_id;
+        return view('user.statistics.index', $this->getStatisticsData($departmentId));
     }
 
     public function exportPdf()
     {
-        $pdf = Pdf::loadView('admin.statistics.pdf', $this->getStatisticsData());
-        return $pdf->download('statistics-' . now()->format('Y-m-d') . '.pdf');
+        $departmentId = auth()->user()->department_id;
+        $pdf = Pdf::loadView('admin.statistics.pdf', $this->getStatisticsData($departmentId));
+        return $pdf->download('my-department-statistics-' . now()->format('Y-m-d') . '.pdf');
     }
 }

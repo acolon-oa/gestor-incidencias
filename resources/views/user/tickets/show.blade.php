@@ -37,7 +37,13 @@
                 <span class="text-sm text-base-content/40 ml-2 font-medium italic">Submitted {{ $ticket->created_at->diffForHumans() }}</span>
             </div>
         </div>
-        <a href="{{ route('user.dashboard') }}" class="btn btn-ghost btn-sm font-black text-xs uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">← Back to Dashboard</a>
+        <div class="flex gap-2">
+            <a href="{{ route('user.tickets.export-pdf', $ticket->id) }}" class="btn btn-outline border-base-content/10 hover:bg-base-content/5 text-base-content font-bold">
+                <x-heroicon-o-document-arrow-down class="w-5 h-5 mr-1" />
+                Export PDF
+            </a>
+            <a href="{{ route('user.dashboard') }}" class="btn btn-ghost btn-sm font-black text-xs uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">← Back to Dashboard</a>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-10">
@@ -64,7 +70,7 @@
             </div>
 
             {{-- Conversation --}}
-            <div class="bg-base-100 border border-base-content/5 rounded-3xl p-8 shadow-sm h-[800px] flex flex-col">
+            <div class="bg-base-100 border border-base-content/5 rounded-3xl p-8 shadow-sm h-[500px] flex flex-col">
                 <h2 class="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] mb-8 flex-none">Conversation History</h2>
 
                 @if($ticket->comments->isEmpty())
@@ -108,26 +114,26 @@
                 @if($ticket->status !== 'closed')
                     {{-- Inner Response form --}}
                     <div class="pt-8 border-t border-base-content/5 mt-4">
-                        <textarea name="content" form="comment-form-user"
-                            class="textarea w-full bg-base-200/50 border-base-content/5 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl p-6 text-sm leading-relaxed placeholder-base-content/20 min-h-[140px]"
-                            placeholder="Add more information or ask a question..."
-                            required></textarea>
-                        <div class="flex flex-col gap-4 mt-4">
-                            <div class="flex items-center gap-2">
-                                <label class="btn btn-ghost btn-xs text-base-content/40 hover:text-primary lowercase font-normal gap-2">
-                                    <x-heroicon-o-paper-clip class="w-4 h-4" />
-                                    <span>Attach images or logs</span>
-                                    <input type="file" name="attachments[]" form="comment-form-user" class="hidden" multiple onchange="handleFileSelect(this, 'preview-user')" />
-                                </label>
-
-                                @if(false) {{-- Moved to description section --}}
-                                @endif
-                            </div>
-                            <div id="preview-user" class="flex flex-wrap gap-2 mb-2"></div>
-                            <div class="flex justify-end">
-                                <button type="submit" form="comment-form-user" class="btn btn-primary px-10 font-black shadow-lg shadow-primary/20">Send Response</button>
+                        <div class="relative w-full shadow-sm rounded-3xl overflow-hidden group border border-base-content/5 bg-base-200/30 focus-within:bg-base-100 focus-within:border-primary/50 transition-all">
+                            <textarea name="content" form="comment-form-user"
+                                class="textarea w-full bg-transparent border-none focus:outline-none focus:ring-0 p-5 pb-16 text-sm leading-relaxed placeholder-base-content/30 min-h-[120px] resize-none"
+                                placeholder="Add more information or ask a question..."
+                                required></textarea>
+                            
+                            <div class="absolute bottom-3 right-3 flex items-center justify-end">
+                                <!-- Attach & Send -->
+                                <div class="flex items-center gap-1 bg-base-100 p-1 rounded-full shadow-sm border border-base-content/5">
+                                    <label class="btn btn-circle btn-ghost btn-sm text-base-content/40 hover:text-primary hover:bg-primary/10 transition-colors" title="Attach file">
+                                        <x-heroicon-o-paper-clip class="w-5 h-5" />
+                                        <input type="file" name="attachments[]" form="comment-form-user" class="hidden" multiple onchange="handleFileSelect(this, 'preview-user')" />
+                                    </label>
+                                    <button type="submit" form="comment-form-user" class="btn btn-circle btn-primary btn-sm shadow-md shadow-primary/30 hover:scale-105 transition-transform" title="Send Response">
+                                        <x-heroicon-s-paper-airplane class="w-4 h-4" style="transform: translateX(1px)" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                        <div id="preview-user" class="flex flex-wrap gap-2 mt-3"></div>
                     </div>
                 @else
                     <div class="bg-base-200/30 rounded-3xl p-8 text-center border border-dashed border-base-content/10 mt-4">
@@ -168,7 +174,7 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-full font-black rounded-2xl shadow-xl shadow-primary/20 py-4 h-auto">Sync Changes</button>
+                    <button type="submit" class="btn btn-primary w-full font-black rounded-2xl shadow-xl shadow-primary/20 py-4 h-auto">Save Changes</button>
                 </form>
 
                 <div class="pt-6 border-t border-base-content/5 mt-4">

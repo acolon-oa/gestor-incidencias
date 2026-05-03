@@ -105,40 +105,25 @@
                     
                     {{-- Inner Comment form (Integrated) --}}
                     <div class="pt-6 border-t border-base-content/5 mt-auto flex-none">
-                        <textarea name="content" form="comment-form-inner"
-                            class="textarea w-full bg-base-200/50 border-base-content/5 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl p-4 text-sm leading-relaxed placeholder-base-content/20 min-h-[80px]"
-                            placeholder="Type your response here..."
-                            required></textarea>
-                        <div class="flex flex-col gap-4 mt-3">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-4">
-                                    <label class="btn btn-ghost btn-xs text-base-content/40 hover:text-primary lowercase font-normal gap-2">
-                                        <x-heroicon-o-paper-clip class="w-4 h-4" />
-                                        <span>Attach</span>
-                                        <input type="file" name="attachments[]" id="file-input-inner" form="comment-form-inner" class="hidden" multiple onchange="handleFileSelect(this, 'preview-inner')" />
-                                    </label>
-
-                                    @if($ticket->attachments->where('comment_id', null)->count() > 0)
-                                        <div class="flex items-center gap-1.5 ml-2 pl-4 border-l border-base-content/10 overflow-x-auto pb-1 no-scrollbar max-w-[200px]">
-                                            @foreach($ticket->attachments->where('comment_id', null) as $attachment)
-                                                <a href="{{ route('attachments.download', $attachment->id) }}" class="flex items-center gap-2 px-2 py-1 bg-base-300/30 hover:bg-primary/5 text-base-content/60 hover:text-primary rounded-lg transition-all text-[10px] font-bold border border-base-content/5 whitespace-nowrap shadow-sm">
-                                                    <x-heroicon-o-document-arrow-down class="w-3 h-3" />
-                                                    <span class="truncate max-w-[80px]">{{ $attachment->filename }}</span>
-                                                </a>
-                                            @endforeach
-                                        </div>
-                                    @endif
-
+                        
+                        <div class="relative w-full shadow-sm rounded-3xl overflow-hidden group border border-base-content/5 bg-base-200/30 focus-within:bg-base-100 focus-within:border-primary/50 transition-all">
+                            <textarea name="content" form="comment-form-inner"
+                                class="textarea w-full bg-transparent border-none focus:outline-none focus:ring-0 p-5 pb-16 text-sm leading-relaxed placeholder-base-content/30 min-h-[120px] resize-none"
+                                placeholder="Type your response here..."
+                                required></textarea>
+                            
+                            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                                <!-- Left side: Quick templates -->
+                                <div>
                                     <div class="dropdown dropdown-top dropup">
-                                        <label tabindex="0" class="btn btn-ghost btn-xs text-base-content/40 hover:text-success lowercase font-normal gap-2">
-                                            <x-heroicon-o-bolt class="w-4 h-4" />
-                                            <span>Quick</span>
+                                        <label tabindex="0" class="btn btn-circle btn-ghost btn-sm text-base-content/40 hover:text-success hover:bg-success/10 transition-colors" title="Quick Templates">
+                                            <x-heroicon-o-bolt class="w-5 h-5" />
                                         </label>
-                                        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-64 border border-base-content/5 mb-2">
+                                        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-64 border border-base-content/5 mb-2">
                                             <li class="menu-title text-[10px] font-black uppercase text-base-content/30 opacity-100 mb-1">Templates</li>
                                             @foreach($cannedResponses as $cr)
                                                 <li>
-                                                    <button type="button" class="text-xs py-2 hover:bg-success/10 hover:text-success transition-all text-left"
+                                                    <button type="button" class="text-xs py-2 hover:bg-success/10 hover:text-success transition-all text-left font-bold"
                                                             onclick="insertQuickResponse('{{ addslashes($cr->content) }}')">
                                                         {{ $cr->title }}
                                                     </button>
@@ -146,10 +131,33 @@
                                             @endforeach
                                         </ul>
                                     </div>
-                                    <button type="submit" form="comment-form-inner" class="btn btn-primary btn-sm px-6 font-black shadow-lg shadow-primary/20">Post Update</button>
+                                </div>
+                                
+                                <!-- Right side: Attach & Send -->
+                                <div class="flex items-center gap-1 bg-base-100 p-1 rounded-full shadow-sm border border-base-content/5">
+                                    <label class="btn btn-circle btn-ghost btn-sm text-base-content/40 hover:text-primary hover:bg-primary/10 transition-colors" title="Attach file">
+                                        <x-heroicon-o-paper-clip class="w-5 h-5" />
+                                        <input type="file" name="attachments[]" id="file-input-inner" form="comment-form-inner" class="hidden" multiple onchange="handleFileSelect(this, 'preview-inner')" />
+                                    </label>
+                                    <button type="submit" form="comment-form-inner" class="btn btn-circle btn-primary btn-sm shadow-md shadow-primary/30 hover:scale-105 transition-transform" title="Send Response">
+                                        <x-heroicon-s-paper-airplane class="w-4 h-4" style="transform: translateX(1px)" />
+                                    </button>
                                 </div>
                             </div>
-                            <div id="preview-inner" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 mt-3">
+                            @if($ticket->attachments->where('comment_id', null)->count() > 0)
+                                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                                    @foreach($ticket->attachments->where('comment_id', null) as $attachment)
+                                        <a href="{{ route('attachments.download', $attachment->id) }}" class="flex items-center gap-2 px-3 py-1.5 bg-base-300/30 hover:bg-primary/5 text-base-content/60 hover:text-primary rounded-xl transition-all text-[10px] font-bold border border-base-content/5 whitespace-nowrap shadow-sm">
+                                            <x-heroicon-o-document-arrow-down class="w-4 h-4" />
+                                            <span class="truncate max-w-[120px]">{{ $attachment->filename }}</span>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <div id="preview-inner" class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
                 </div>
@@ -201,7 +209,7 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-full font-black rounded-2xl shadow-xl shadow-primary/20 py-4 h-auto">Sync Changes</button>
+                    <button type="submit" class="btn btn-primary w-full font-black rounded-2xl shadow-xl shadow-primary/20 py-4 h-auto">Save Changes</button>
                     
                     <div class="pt-6 border-t border-base-content/5 mt-4">
                         <h4 class="text-[10px] font-black text-base-content/20 uppercase tracking-[0.2em] mb-4">Metadata</h4>

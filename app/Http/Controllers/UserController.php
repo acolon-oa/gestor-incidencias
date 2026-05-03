@@ -11,18 +11,26 @@ class UserController extends Controller
         $user = auth()->user();
         $userId = $user->id;
         $deptId = $user->department_id;
-        
-        // Count tickets the user is involved in (own or department)
-        $queryBase = \App\Models\Ticket::where(function($q) use ($userId, $deptId) {
+        $view = $request->get('view', 'department'); // Default to department for normal dashboard
+
+        // Base query for counts (all visible tickets)
+        $countQuery = \App\Models\Ticket::where(function($q) use ($userId, $deptId) {
             $q->where('user_id', $userId)
               ->orWhere('department_id', $deptId);
         });
 
-        $openTicketsCount = (clone $queryBase)->where('status', 'open')->count();
-        $inProgressTicketsCount = (clone $queryBase)->where('status', 'in_progress')->count();
-        $resolvedTicketsCount = (clone $queryBase)->where('status', 'closed')->count();
+        // Query for the specific view
+        if ($view === 'personal') {
+            $query = \App\Models\Ticket::where('user_id', $userId);
+        } else {
+            $query = \App\Models\Ticket::where('department_id', $deptId);
+        }
 
-        $query = (clone $queryBase)->with(['department', 'user']);
+        $openTicketsCount = (clone $countQuery)->where('status', 'open')->count();
+        $inProgressTicketsCount = (clone $countQuery)->where('status', 'in_progress')->count();
+        $resolvedTicketsCount = (clone $countQuery)->where('status', 'closed')->count();
+
+        $query->with(['department', 'user']);
 
         // Filtering logic (same as Admin)
         if ($request->filled('ticket_id')) {

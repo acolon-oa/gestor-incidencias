@@ -14,11 +14,11 @@ use Illuminate\Support\Facades\Storage;
 
 class TicketController extends Controller
 {
-    // Listar tickets del usuario
     public function index()
     {
         $user = Auth::user();
         $tickets = Ticket::where('user_id', $user->id)
+                         ->orWhere('assigned_to_id', $user->id)
                          ->orWhere('department_id', $user->department_id)
                          ->latest()
                          ->paginate(10);
@@ -81,11 +81,10 @@ class TicketController extends Controller
                          ->with('success', $successMessage);
     }
 
-    // Ver ticket
     public function show(Ticket $ticket)
     {
         $user = Auth::user();
-        if ($ticket->user_id !== $user->id && $ticket->department_id !== $user->department_id) {
+        if ($ticket->user_id !== $user->id && $ticket->department_id !== $user->department_id && $ticket->assigned_to_id !== $user->id) {
             abort(403, 'Unauthorized');
         }
 
@@ -97,7 +96,7 @@ class TicketController extends Controller
     public function update(Request $request, Ticket $ticket)
     {
         $user = Auth::user();
-        if ($ticket->user_id !== $user->id && $ticket->department_id !== $user->department_id) {
+        if ($ticket->user_id !== $user->id && $ticket->department_id !== $user->department_id && $ticket->assigned_to_id !== $user->id) {
             abort(403, 'Unauthorized');
         }
 
@@ -136,5 +135,86 @@ class TicketController extends Controller
         $ticket->update($validated);
 
         return back()->with('success', 'Ticket updated successfully.');
+    }
+
+    public function kanban()
+    {
+        $user = Auth::user();
+        
+        // Las incidencias que creó, se le asignaron, o son de su departamento
+        $tickets = Ticket::with(['user', 'department', 'assignedTo'])
+                         ->where('user_id', $user->id)
+                         ->orWhere('assigned_to_id', $user->id)
+                         ->orWhere('department_id', $user->department_id)
+                         ->get();
+
+        $kanban = [
+            'open' => $tickets->where('status', 'open'),
+            'in_progress' => $tickets->where('status', 'in_progress'),
+            'closed' => $tickets->where('status', 'closed'),
+        ];
+
+        return view('user.tickets.kanban', compact('kanban'));
+    }
+
+    public function updateStatusAjax(Request $request, Ticket $ticket)
+    {
+        $user = Auth::user();
+        
+        // Comprobar que el ticket le pertenece, está asignado a él, o es de su departamento
+        if ($ticket->user_id !== $user->id && $ticket->department_id !== $user->department_id && $ticket->assigned_to_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:open,in_progress,closed',
+        ]);
+
+        $oldStatus = $ticket->status;
+
+        if ($validated['status'] !== $oldStatus) {
+            AuditLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id' => auth()->id(),
+                'type' => 'status_change',
+                'old_value' => $oldStatus,
+                'new_value' => $validated['status'],
+            ]);
+
+            if ($validated['status'] === 'closed') {
+                $ticket->closed_at = now();
+            }
+
+            $ticket->status = $validated['status'];
+            $ticket->save();
+
+            // Notifications
+            if ($ticket->user_id !== auth()->id()) {
+                $ticket->user?->notify(new TicketUpdated(
+                    $ticket,
+                    'status_changed',
+                    $oldStatus,
+                    $validated['status']
+                ));
+            }
+            
+            User::role('admin')
+                ->where('id', '!=', auth()->id())
+                ->each(fn($admin) => $admin->notify(new TicketUpdated($ticket, 'status_changed', $oldStatus, $validated['status'])));
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function exportPdf(Ticket $ticket)
+    {
+        $user = Auth::user();
+        if ($ticket->user_id !== $user->id && $ticket->department_id !== $user->department_id && $ticket->assigned_to_id !== $user->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $ticket->load(['user', 'department', 'comments.user', 'assignedTo']);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.tickets.pdf', compact('ticket'));
+        return $pdf->download('ticket-' . $ticket->id . '.pdf');
     }
 }
